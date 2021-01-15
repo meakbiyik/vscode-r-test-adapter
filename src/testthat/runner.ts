@@ -13,7 +13,7 @@ const appendFile = util.promisify(_appendFile);
 
 export async function runAllTests(adapter: RAdapter): Promise<string> {
     let devtoolsCall = "devtools::test('.')"
-    let command = `RScript.exe -e "${devtoolsCall}"`
+    let command = `RScript -e "${devtoolsCall}"`
     let cwd = vscode.workspace.workspaceFolders![0].uri.fsPath;
     return new Promise(async resolve => {
         let childProcess = exec(command, {cwd}, (err, stdout: string, stderr: string) => {
@@ -26,7 +26,7 @@ export async function runAllTests(adapter: RAdapter): Promise<string> {
 
 export async function runSingleTestFile(adapter: RAdapter, filePath: string): Promise<string> {
     let devtoolsCall = `devtools::test_file('${filePath.replace(/\\/g,'/')}')`
-    let command = `RScript.exe -e "${devtoolsCall}"`
+    let command = `RScript -e "${devtoolsCall}"`
     let cwd = vscode.workspace.workspaceFolders![0].uri.fsPath;
     return new Promise(async resolve => {
         let childProcess = exec(command, {cwd}, (err, stdout: string, stderr: string) => {
