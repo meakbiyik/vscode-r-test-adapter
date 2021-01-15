@@ -41,7 +41,7 @@ export async function runTest(adapter: RAdapter, test: TestInfo) {
     let documentUri = Uri.file(test.file!)
     let document = await workspace.openTextDocument(documentUri)
     let source = document.getText()
-    let allTests = (await parseTestsFromFile(documentUri)).children
+    let allTests = (await parseTestsFromFile(adapter, documentUri)).children
     
     for (const parsedTest of allTests) {
         const {startIndex, endIndex} = getRangeOfTest(parsedTest.label, source)

@@ -3,12 +3,13 @@ import { TestSuiteInfo, TestInfo } from "vscode-test-adapter-api";
 import * as path from "path";
 import * as util from "util";
 import { exec as _exec } from 'child_process';
+import { RAdapter } from '../adapter';
 
 const treeSitterRPath = path.join(__dirname, "..", "..", "node_modules", "tree-sitter-r");
 const queryPath = path.join(__dirname, "..", "..", "src", "testthat", "queries", "detect.scm");
 const exec = util.promisify(_exec);
 
-export async function parseTestsFromFile(uri: vscode.Uri): Promise<TestSuiteInfo> {
+export async function parseTestsFromFile(adapter: RAdapter, uri: vscode.Uri): Promise<TestSuiteInfo> {
 
     let test_suite: TestSuiteInfo = {
         type: 'suite',
@@ -23,7 +24,7 @@ export async function parseTestsFromFile(uri: vscode.Uri): Promise<TestSuiteInfo
         const result = await execute_R_parser(uri);
         stdout = result.stdout
 	} catch (error) {
-		console.log(error)
+		adapter.log.error(error)
 		return test_suite
     }
     

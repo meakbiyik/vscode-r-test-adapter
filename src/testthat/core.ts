@@ -19,18 +19,18 @@ export async function loadTests(adapter: RAdapter): Promise<TestSuiteInfo> {
 	try {
 		testFiles = await vscode.workspace.findFiles("**/tests/testthat/**/test*.R");
 	} catch (error) {
-		console.log(error)
+		adapter.log.error(error)
 		return testSuite
 	}
 
 	for (const testFile of testFiles) {
 		try {
-			let tests_in_file = await parseTestsFromFile(testFile)
+			let tests_in_file = await parseTestsFromFile(adapter, testFile)
 			testSuite.children.push(
 				tests_in_file
 			)
 		} catch (error) {
-			console.log(error)
+			adapter.log.error(error)
 		}
 	}
 
@@ -94,7 +94,7 @@ async function runNode(
 				}
 			}
 		} catch (error) {
-			console.log(error)
+			adapter.log.error(error)
 			for (const file of <TestSuiteInfo[]> node.children) {
 				for (const test of file.children) {
 					testStatesEmitter.fire(<TestEvent>{ type: 'test', test: test.id, state: 'errored' });
@@ -126,7 +126,7 @@ async function runNode(
 				}
 			}
 		} catch (error) {
-			console.log(error)
+			adapter.log.error(error)
 			for (const test of node.children) {
 				testStatesEmitter.fire(<TestEvent>{ type: 'test', test: test.id, state: 'errored' });
 			}
@@ -150,7 +150,7 @@ async function runNode(
 				testStatesEmitter.fire(<TestEvent>{ type: 'test', test: node.id, state: 'passed'});
 			}
 		} catch (error) {
-			console.log(error)
+			adapter.log.error(error)
 			testStatesEmitter.fire(<TestEvent>{ type: 'test', test: node.id, state: 'errored' });
 		}
 	}

@@ -8,13 +8,13 @@ import { ChildProcess } from 'child_process';
 export class RAdapter implements TestAdapter {
 
 	private disposables: { dispose(): void }[] = [];
-	processes: ChildProcess[] = [];
+	public processes: ChildProcess[] = [];
 
 	readonly testsEmitter = new vscode.EventEmitter<TestLoadStartedEvent | TestLoadFinishedEvent>();
 	readonly testStatesEmitter = new vscode.EventEmitter<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent>();
 	readonly autorunEmitter = new vscode.EventEmitter<void>();
 	private readonly watcher: vscode.FileSystemWatcher
-	loadTimeout = setTimeout(()=>{}, 1)
+	private loadTimeout = setTimeout(()=>{}, 1)
 
 	get tests(): vscode.Event<TestLoadStartedEvent | TestLoadFinishedEvent> { return this.testsEmitter.event; }
 	get testStates(): vscode.Event<TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent> { return this.testStatesEmitter.event; }
@@ -22,7 +22,7 @@ export class RAdapter implements TestAdapter {
 
 	constructor(
 		public readonly workspace: vscode.WorkspaceFolder,
-		private readonly log: Log
+		public readonly log: Log
 	) {
 
 		this.log.info('Initializing R adapter');
