@@ -3,4 +3,8 @@ src/**
 package-lock.json
 tsconfig.json
 .vscode/**
+.vscode-test/**
 .gitignore
+*.svg
+out/test/**
+test/**
