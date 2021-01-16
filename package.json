@@ -81,8 +81,8 @@
           "type": "string",
           "scope": "resource"
         },
-        "RExplorer.RScriptPath": {
-          "description": "Path to the RScript binary",
+        "RExplorer.RscriptPath": {
+          "description": "Path to the Rscript binary",
           "type": "string",
           "scope": "resource"
         }

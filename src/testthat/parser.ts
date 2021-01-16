@@ -53,7 +53,7 @@ export async function parseTestsFromFile(adapter: RAdapter, uri: vscode.Uri): Pr
 
 function execute_R_parser(uri: vscode.Uri) {
     let filePath = uri.fsPath;
-    let command = `npx tree-sitter query ${queryPath} ${filePath} -c`
+    let command = `npx -c "tree-sitter query ${queryPath} ${filePath} -c"`
     return exec(command, {cwd: treeSitterRPath})
 }
 
