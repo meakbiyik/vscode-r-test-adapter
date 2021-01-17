@@ -257,27 +257,31 @@ export class TestthatAdapter extends RAdapter {
     }
 
     getFailedTests(stdout: string, filename?: string) {
-        const failureRegex = /failure \((?<fileName>.+?):\d+:\d+\): (?<label>.+)(\r\n|\r|\n)(?<reason>[\w\W]+?)(?=(\s+skip|\s+failure|\s+warn|-{10,}))/gi;
+        const failureRegex = /(failure|error) \((?<fileName>.+?):\d+:\d+\): (?<label>.+)(\r\n|\r|\n)(?<reason>[\w\W]+?)(?=(\n\s*skip|\n\s*failure|\n\s*warn|\n\s*error|[-─]{10,}))/gi;
         let failedTests = new Map<string, string>();
         let match;
         while ((match = failureRegex.exec(stdout))) {
             let testLabel = match.groups!["label"];
             let fileName = filename ? filename : match.groups!["fileName"];
             let reason = match.groups!["reason"];
-            failedTests.set(encodeNodeId(fileName, testLabel), reason);
+            let id = encodeNodeId(fileName, testLabel)
+            let previousReasons = failedTests.get(id)?failedTests.get(id):""
+            failedTests.set(id, previousReasons + reason + "\n\n");
         }
         return failedTests;
     }
 
     getSkippedTests(stdout: string, filename?: string) {
-        const skipRegex = /skip \((?<fileName>.+?):\d+:\d+\): (?<label>.+)(\r\n|\r|\n)(?<reason>[\w\W]+?)(?=(\s+skip|\s+failure|\s+warn|-{10,}))/gi;
+        const skipRegex = /skip \((?<fileName>.+?):\d+:\d+\): (?<label>.+)(\r\n|\r|\n)(?<reason>[\w\W]+?)(?=(\n\s*skip|\n\s*failure|\n\s*warn|\n\s*error|[-─]{10,}))/gi;
         let skippedTests = new Map<string, string>();
         let match;
         while ((match = skipRegex.exec(stdout))) {
             let testLabel = match.groups!["label"];
             let fileName = filename ? filename : match.groups!["fileName"];
             let reason = match.groups!["reason"];
-            skippedTests.set(encodeNodeId(fileName, testLabel), reason);
+            let id = encodeNodeId(fileName, testLabel)
+            let previousReasons = skippedTests.get(id)?skippedTests.get(id):""
+            skippedTests.set(id, previousReasons + reason + "\n\n");
         }
         return skippedTests;
     }

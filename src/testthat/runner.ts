@@ -12,7 +12,7 @@ import { TestthatAdapter } from "./adapter";
 const appendFile = util.promisify(_appendFile);
 
 export async function runAllTests(adapter: TestthatAdapter): Promise<string> {
-    let devtoolsCall = "devtools::test('.')";
+    let devtoolsCall = `options("testthat.use_colours"=F);devtools::test('.')`;
     let command = `Rscript -e "${devtoolsCall}"`;
     let cwd = vscode.workspace.workspaceFolders![0].uri.fsPath;
     return new Promise(async (resolve) => {
@@ -29,7 +29,7 @@ export async function runSingleTestFile(
     adapter: TestthatAdapter,
     filePath: string
 ): Promise<string> {
-    let devtoolsCall = `devtools::test_file('${filePath.replace(/\\/g, "/")}')`;
+    let devtoolsCall = `options("testthat.use_colours"=F);devtools::test_file('${filePath.replace(/\\/g, "/")}')`;
     let command = `Rscript -e "${devtoolsCall}"`;
     let cwd = vscode.workspace.workspaceFolders![0].uri.fsPath;
     return new Promise(async (resolve) => {
