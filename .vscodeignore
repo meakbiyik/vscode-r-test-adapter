@@ -8,3 +8,5 @@ tsconfig.json
 *.svg
 out/test/**
 test/**
+.prettierignore
+azure-pipelines.yml

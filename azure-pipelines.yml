@@ -42,10 +42,10 @@ steps:
   env:
     DISPLAY: ':99.0'
 
-# - bash: |
-#     echo ">>> Publish"
-#     npm deploy
-#   displayName: Publish
-#   condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'), eq(variables['Agent.OS'], 'Linux'))
-#   env:
-#     VSCE_PAT: $(VSCE_PAT)
+- bash: |
+    echo ">>> Publish"
+    npm run publish
+  displayName: Publish
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'), eq(variables['Agent.OS'], 'Linux'))
+  env:
+    VSCE_PAT: $(VSCE_PAT)
