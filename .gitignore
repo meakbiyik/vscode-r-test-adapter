@@ -3,3 +3,4 @@ out/
 .vscode-test/
 coverage/
 .nyc_output/
+*.vsix

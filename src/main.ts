@@ -7,8 +7,8 @@ export async function activate(context: vscode.ExtensionContext) {
     const workspaceFolder = (vscode.workspace.workspaceFolders || [])[0];
 
     // create a simple logger that can be configured with the configuration variables
-    // `RExplorer.logpanel` and `RExplorer.logfile`
-    const log = new Log("RExplorer", workspaceFolder, "R Explorer Log");
+    // `RTestAdapter.logpanel` and `RTestAdapter.logfile`
+    const log = new Log("RTestAdapter", workspaceFolder, "R Test Adapter Log");
     context.subscriptions.push(log);
 
     // get the Test Explorer extension

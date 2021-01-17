@@ -34,7 +34,7 @@
     "publish": "vsce publish",
     "deploy": "vsce publish",
     "test": "node ./out/test/runTest.js",
-    "coverage": "nyc -i ts-node/register -r lcov -e .ts -x \"*.test.ts\" npm run test"
+    "coverage": "nyc -x .vscode-test/ -a true -i ts-node/register -i source-map-support/register -r lcov -e .ts -x \"*.test.ts\" npm run test"
   },
   "dependencies": {
     "tmp-promise": "^3.0.2",
@@ -54,6 +54,7 @@
     "nyc": "^15.1.0",
     "prettier": "2.2.1",
     "sinon": "^9.2.3",
+    "source-map-support": "^0.5.19",
     "ts-node": "^9.1.1",
     "typescript": "^3.9.7",
     "vsce": "^1.65.0",
@@ -83,17 +84,18 @@
       "type": "object",
       "title": "R Test Explorer configuration",
       "properties": {
-        "RExplorer.logpanel": {
+        "RTestAdapter.logpanel": {
           "description": "Write diagnotic logs to an output panel",
           "type": "boolean",
-          "scope": "resource"
+          "scope": "resource",
+          "default": true
         },
-        "RExplorer.logfile": {
+        "RTestAdapter.logfile": {
           "description": "Write diagnostic logs to the given file",
           "type": "string",
           "scope": "resource"
         },
-        "RExplorer.RscriptPath": {
+        "RTestAdapter.RscriptPath": {
           "description": "Path to the Rscript binary",
           "type": "string",
           "scope": "resource"

@@ -11,10 +11,8 @@ const queryPath = path.join(
     "..",
     "..",
     "..",
-    "src",
-    "testthat",
-    "queries",
-    "detect.scm"
+    "query",
+    "detect_testthat.scm"
 );
 const exec = util.promisify(_exec);
 

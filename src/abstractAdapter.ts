@@ -49,6 +49,8 @@ export abstract class RAdapter implements TestAdapter {
         this.disposables.push(this.testsEmitter);
         this.disposables.push(this.testStatesEmitter);
         this.disposables.push(this.autorunEmitter);
+
+        this.log.info(`Initialized ${this.name} adapter`);
     }
 
     abstract loadTests(): Promise<TestSuiteInfo>;
@@ -71,6 +73,7 @@ export abstract class RAdapter implements TestAdapter {
             type: "finished",
             suite: loadedTests,
         });
+        this.log.info(`Loaded ${this.name} tests`);
     }
 
     async run(tests: string[]): Promise<void> {
@@ -81,9 +84,11 @@ export abstract class RAdapter implements TestAdapter {
         });
         await this.runTests(tests);
         this.testStatesEmitter.fire(<TestRunFinishedEvent>{ type: "finished" });
+        this.log.info(`Ran ${this.name} tests`);
     }
 
     cancel(): void {
+        this.log.info(`Canceling ${this.name} processes`);
         for (const childProcess of this.processes) {
             childProcess.kill();
             if (process.platform == "win32") {
@@ -92,6 +97,7 @@ export abstract class RAdapter implements TestAdapter {
         }
         this.processes = new Set();
         this.testStatesEmitter.fire(<TestRunFinishedEvent>{ type: "finished" });
+        this.log.info(`Canceled ${this.name} processes`);
     }
 
     dispose(): void {
