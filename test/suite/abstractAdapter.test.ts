@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { Log } from "vscode-test-adapter-util";
-import { assert } from "../helpers";
+import { expect } from "chai";
 import * as path from "path";
 import * as tmp from "tmp-promise";
 import * as crypto from "crypto";
@@ -47,8 +47,8 @@ suite("abstractAdapter", () => {
 
     test("Is constructed properly", () => {
         let testAdapter = new FakeAdapter(workspaceFolder, log);
-        assert.ok((<any>testAdapter).watcher);
-        assert.strictEqual((<any>testAdapter).disposables.length, 4);
+        expect((<any>testAdapter).watcher).to.exist;
+        expect((<any>testAdapter).disposables).to.have.lengthOf(4);
         testAdapter.dispose();
     });
 
@@ -62,7 +62,7 @@ suite("abstractAdapter", () => {
                 children: [],
             });
         };
-        let tmpFileName = `test-${randomChars()}.R`
+        let tmpFileName = `test-temp${randomChars()}.R`
         let testLoadStartedFiredFlag = false;
         let testLoadFinishedFiredFlag = false;
         testAdapter.testsEmitter.event((e) => {
@@ -76,8 +76,8 @@ suite("abstractAdapter", () => {
             tmpdir: testRepoTestsPath
         });
         await sleep(5000);
-        assert.ok(testLoadStartedFiredFlag);
-        assert.ok(testLoadFinishedFiredFlag);
+        expect(testLoadStartedFiredFlag).to.be.true;
+        expect(testLoadFinishedFiredFlag).to.be.true;
         testAdapter.dispose();
         await tmpFileResult.cleanup()
         await sleep(1000); //await for cleanup
@@ -93,7 +93,7 @@ suite("abstractAdapter", () => {
                 children: [],
             });
         };
-        let tmpFileName = `test-${randomChars()}.R`
+        let tmpFileName = `test-temp${randomChars()}.R`
         let tmpFilePath = path.normalize(path.join(testRepoTestsPath, tmpFileName))
         testAdapter.tempFilePaths.add(tmpFilePath);
         let testLoadStartedFiredFlag = false;
@@ -109,8 +109,8 @@ suite("abstractAdapter", () => {
             tmpdir: testRepoTestsPath
         });
         await sleep(5000);
-        assert.ok(!testLoadStartedFiredFlag);
-        assert.ok(!testLoadFinishedFiredFlag);
+        expect(testLoadStartedFiredFlag).to.be.false;
+        expect(testLoadFinishedFiredFlag).to.be.false;
         testAdapter.dispose();
         await tmpFileResult.cleanup()
         await sleep(1000); //await for cleanup
@@ -135,8 +135,8 @@ suite("abstractAdapter", () => {
             if (e.type == "finished") testLoadFinishedFiredFlag = true;
         });
         await testAdapter.load();
-        assert.ok(testLoadStartedFiredFlag);
-        assert.ok(testLoadFinishedFiredFlag);
+        expect(testLoadStartedFiredFlag).to.be.true;
+        expect(testLoadFinishedFiredFlag).to.be.true;
         testAdapter.dispose();
     });
 
@@ -154,8 +154,8 @@ suite("abstractAdapter", () => {
             if (e.type == "finished") testRunFinishedFiredFlag = true;
         });
         await testAdapter.run([]);
-        assert.ok(testRunStartedFiredFlag);
-        assert.ok(testRunFinishedFiredFlag);
+        expect(testRunStartedFiredFlag).to.be.true;
+        expect(testRunFinishedFiredFlag).to.be.true;
         testAdapter.dispose();
     });
 
@@ -168,8 +168,8 @@ suite("abstractAdapter", () => {
         let childProcess = exec(command, (err, _stdout: string, stderr: string) => {if (err) errorInProcess=true;});
         testAdapter.childProcess = childProcess;
         testAdapter.cancel()
-        await sleep(500); // especially in local, it takes some time to cancel
-        assert.ok(childProcess.killed && errorInProcess)
+        await sleep(2000); // especially in local, it takes some time to cancel
+        expect(childProcess.killed && errorInProcess).to.be.true
         testAdapter.dispose();
     })
 

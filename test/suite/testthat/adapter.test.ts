@@ -1,13 +1,17 @@
 import * as core from "../../../src/testthat/adapter";
 import * as vscode from "vscode";
 import { Log } from "vscode-test-adapter-util";
-import { assert } from "../../helpers";
 import * as path from "path";
 import * as crypto from "crypto";
 import * as tmp from "tmp-promise";
 import * as util from "util";
-import * as equal from "fast-deep-equal";
+import * as fs from "fs";
 import { TestInfo, TestSuiteInfo } from "vscode-test-adapter-api";
+import * as chai from "chai";
+import * as deepEqualInAnyOrder from 'deep-equal-in-any-order';
+
+chai.use(deepEqualInAnyOrder);
+const expect = chai.expect
 
 const testRepoPath = path.join(__dirname, "..", "..", "..", "..", "test", "testRepo")
 const testRepoTestsPath = path.join(testRepoPath, "tests", "testthat") 
@@ -23,15 +27,15 @@ suite("TestthatAdapter", () => {
 
     test("Is constructed properly", () => {
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
-        assert.ok((<any>testAdapter).watcher);
-        assert.strictEqual((<any>testAdapter).disposables.length, 4);
+        expect((<any>testAdapter).watcher).to.exist;
+        expect((<any>testAdapter).disposables).to.have.lengthOf(4);
         testAdapter.dispose();
     });
 
     test("Load is triggered on change", async () => {
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
         testAdapter.loadTests = () => <Promise<TestSuiteInfo>>{};
-        let tmpFileName = `test-${randomChars()}.R`
+        let tmpFileName = `test-temp${randomChars()}.R`
         let testLoadStartedFiredFlag = false;
         let testLoadFinishedFiredFlag = false;
         testAdapter.testsEmitter.event((e) => {
@@ -45,18 +49,23 @@ suite("TestthatAdapter", () => {
             tmpdir: testRepoTestsPath
         });
         await sleep(5000);
-        assert.ok(testLoadStartedFiredFlag);
-        assert.ok(testLoadFinishedFiredFlag);
+        expect(testLoadStartedFiredFlag).to.be.true;
+        expect(testLoadFinishedFiredFlag).to.be.true;
         testAdapter.dispose();
         await tmpFileResult.cleanup()
         await sleep(1000); //await for cleanup
     });
 
     test("Tests are loaded correctly", async () => {
+        // check for any temp files not yet removed from directory
+        let tempTestFiles = await vscode.workspace.findFiles("**/tests/testthat/**/test-temp*.R");
+        for (const file of tempTestFiles) {
+            fs.unlinkSync(file.fsPath)
+        }
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
         (<any>testAdapter).isLoading = true;
         let tests = await testAdapter.loadTests()
-        assert.ok(equal(tests, testRepoStructure))
+        expect(tests).to.be.deep.equalInAnyOrder(testRepoStructure);
         testAdapter.dispose();
     });
 

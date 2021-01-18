@@ -11,6 +11,7 @@ async function main() {
         const extensionDevelopmentPath = path.resolve(__dirname, "../../");
         const extensionTestsPath = path.resolve(__dirname, "./suite/index");
         const vscodeExecutablePath = await downloadAndUnzipVSCode("1.40.1");
+        const testRepoPath = path.join(__dirname, "..", "..", "test", "testRepo")
         const cliPath = resolveCliPathFromVSCodeExecutablePath(vscodeExecutablePath);
 
         // Use cp.spawn / cp.exec for custom setup
@@ -20,7 +21,7 @@ async function main() {
         });
 
         // Download VS Code, unzip it and run the integration test
-        await runTests({ extensionDevelopmentPath, extensionTestsPath });
+        await runTests({ extensionDevelopmentPath, extensionTestsPath, launchArgs:[testRepoPath] });
     } catch (err) {
         console.error(err);
         console.error("Failed to run tests");
