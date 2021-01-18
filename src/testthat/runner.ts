@@ -4,6 +4,7 @@ import * as path from "path";
 import * as tmp from "tmp-promise";
 import { exec } from "child_process";
 import * as vscode from "vscode";
+import * as crypto from "crypto";
 import { TestInfo } from "vscode-test-adapter-api";
 import { parseTestsFromFile } from "./parser";
 import { appendFile as _appendFile } from "fs";
@@ -18,10 +19,10 @@ export async function runAllTests(adapter: TestthatAdapter): Promise<string> {
     return new Promise(async (resolve) => {
         let childProcess = exec(command, { cwd }, (err, stdout: string, stderr: string) => {
             if (err) throw stderr;
-            adapter.processes.delete(childProcess);
+            adapter.childProcess = undefined;
             resolve(stdout);
         });
-        adapter.processes.add(childProcess);
+        adapter.childProcess = childProcess;
     });
 }
 
@@ -35,10 +36,10 @@ export async function runSingleTestFile(
     return new Promise(async (resolve) => {
         let childProcess = exec(command, { cwd }, (err, stdout: string, stderr: string) => {
             if (err) throw stderr;
-            adapter.processes.delete(childProcess);
+            adapter.childProcess = undefined;
             resolve(stdout);
         });
-        adapter.processes.add(childProcess);
+        adapter.childProcess = childProcess;
     });
 }
 
@@ -58,13 +59,15 @@ export async function runTest(adapter: TestthatAdapter, test: TestInfo) {
         }
     }
 
+    let randomFileInfix = randomChars()
+    let tmpFileName = `test-${randomFileInfix}.R`
+    let tmpFilePath = path.normalize(path.join(path.dirname(test.file!), tmpFileName))
+    adapter.tempFilePaths.add(tmpFilePath); // Do not clean up tempFilePaths, not possible to get around the race condition 
+                                            // cleanup is not guaranteed to unlink the file immediately
     let tmpFileResult = await tmp.file({
-        prefix: "test-",
-        postfix: ".R",
+        name: tmpFileName,
         tmpdir: path.dirname(test.file!),
     });
-    let tmpFilePath = path.normalize(tmpFileResult.path);
-    adapter.tempFilePaths.add(tmpFilePath); // Do not clean up tempFilePaths, not possible to get around the race condition
     await appendFile(tmpFilePath, source);
     return runSingleTestFile(adapter, tmpFilePath)
         .catch(async (err) => {
@@ -92,4 +95,27 @@ function getRangeOfTest(label: string, source: string) {
         if (char == ")") paranthesis -= 1;
     }
     return { startIndex, endIndex };
+}
+
+function randomChars() {
+    
+    const RANDOM_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+    const count = 12;
+
+    let
+      value = [],
+      rnd = null;
+  
+    // make sure that we do not fail because we ran out of entropy
+    try {
+      rnd = crypto.randomBytes(count);
+    } catch (e) {
+      rnd = crypto.pseudoRandomBytes(count);
+    }
+  
+    for (var i = 0; i < 12; i++) {
+      value.push(RANDOM_CHARS[rnd[i] % RANDOM_CHARS.length]);
+    }
+  
+    return value.join('');
 }
