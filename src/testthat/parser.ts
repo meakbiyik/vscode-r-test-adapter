@@ -53,8 +53,6 @@ export async function parseTestsFromFile(
         });
     }
 
-    if (test_suite.children.length == 0) throw SyntaxError("Erroneous regex parse.");
-
     return Promise.resolve(test_suite);
 }
 
