@@ -29,18 +29,22 @@ export async function parseTestsFromFile(
     };
 
     let stdout;
+    console.log("here")
     try {
         const result = await execute_R_parser(uri);
         stdout = result.stdout;
+        console.log("here")
     } catch (error) {
         adapter.log.error(error);
+        console.log(error)
         return test_suite;
     }
 
-    let match_regex = /capture: call, row: (?<line>\d+), text: (?<code>"test_that\s*\([\\"'\s]+(?<label>.+?)[\\"']+,[\w\W]+?)\s+(?=pattern)/g;
+    let match_regex = /capture: call, row: (?<line>\d+), text: (?<code>"test_that\s*\([\\"'\s]+(?<label>.+?)[\\"'\s]+,[\w\W]+?)\s+(?=pattern)/g;
     let match: RegExpExecArray | null;
 
     while ((match = match_regex.exec(stdout))) {
+        console.log("herer")
         let testStart = Number(match.groups!["line"]);
         let fileName = uri.path.split("/").pop()!;
         let testLabel = match.groups!["label"];
@@ -59,6 +63,8 @@ export async function parseTestsFromFile(
 function execute_R_parser(uri: vscode.Uri) {
     let filePath = uri.fsPath;
     let command = `npx -c "tree-sitter query ${queryPath} ${filePath} -c"`;
+    console.log("command")
+    console.log(treeSitterRPath)
     return exec(command, { cwd: treeSitterRPath });
 }
 
