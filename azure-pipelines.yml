@@ -25,6 +25,30 @@ steps:
     versionSpec: '12.x'
   displayName: 'Install Node.js'
 
+- task: CmdLine@2
+  inputs:
+    script: |
+      tzutil /s "GMT Standard Time"
+  displayName: 'Set the timezone for Windows'
+  condition: eq(variables['Agent.OS'], 'Windows_NT')
+
+- bash: |
+    sudo add-apt-repository ppa:cran/libgit2
+    sudo add-apt-repository ppa:c2d4u.team/c2d4u4.0+
+    sudo add-apt-repository ppa:marutter/rrutter
+    sudo add-apt-repository ppa:marutter/c2d4u
+    sudo apt-get update
+    sudo apt-get install libcurl4-gnutls-dev libssh2-1-dev libgit2-dev libxml2-dev
+    sudo apt-get install r-cran-devtools
+    sudo Rscript -e "install.packages('mockery',repos = 'http://cran.us.r-project.org')"
+  displayName: 'Install devtools for Linux'
+  condition: eq(variables['Agent.OS'], 'Linux')
+
+- bash: |
+    Rscript -e "install.packages('devtools', repos = 'http://cran.us.r-project.org', type='binary');install.packages('mockery',repos = 'http://cran.us.r-project.org', type='binary')"
+  displayName: 'Install devtools'
+  condition: ne(variables['Agent.OS'], 'Linux')
+
 - bash: |
     /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     echo ">>> Started xvfb"

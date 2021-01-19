@@ -18,9 +18,9 @@ export async function runAllTests(adapter: TestthatAdapter): Promise<string> {
     let command = `${RscriptCommand} -e "${devtoolsCall}"`;
     let cwd = vscode.workspace.workspaceFolders![0].uri.fsPath;
     return new Promise(async (resolve, reject) => {
-        let childProcess = exec(command, { cwd }, (err, stdout: string, stderr: string) => {
+        let childProcess = exec(command, { cwd, env:process.env }, (err, stdout: string, stderr: string) => {
             adapter.childProcess = undefined;
-            if (err) reject(stderr);
+            if (err) {console.log(err);console.log(process.env); reject(stderr)};
             resolve(stdout);
         });
         adapter.childProcess = childProcess;

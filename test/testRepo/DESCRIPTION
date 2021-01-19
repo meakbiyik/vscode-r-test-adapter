@@ -1,0 +1,28 @@
+Package: whoami
+Title: Username, Full Name, Email Address, 'GitHub' Username of the Current User
+Version: 1.3.0
+Authors@R: c(person(given = "Gábor",
+                    family = "Csárdi", 
+                    email = "csardi.gabor@gmail.com", 
+                    role = c("aut", "cre")),
+            person(given = "Maëlle",
+                   family = "Salmon",
+                    role = "ctb"))
+Description: Look up the username and full name of the current user,
+    the current user's email address and 'GitHub' username,
+    using various sources of system and configuration information.
+License: MIT + file LICENSE
+URL: https://github.com/r-lib/whoami#readme
+BugReports: https://github.com/r-lib/whoami/issues
+Imports: 
+    httr,
+    jsonlite,
+    utils
+Suggests: 
+    covr,
+    mockery,
+    testthat,
+    withr
+Encoding: UTF-8
+RoxygenNote: 6.1.1
+Roxygen: list(markdown = TRUE)

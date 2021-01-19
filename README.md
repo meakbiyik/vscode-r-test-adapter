@@ -6,3 +6,7 @@ This extension is built to help you run R tests on VSCode. Currently only `testt
 
 This repository is a plug-in `Test Adapter` extension that works with the
 [Test Explorer](https://marketplace.visualstudio.com/items?itemName=hbenl.vscode-test-explorer). User does not need to install the `Test Explorer` extension manually, it will automatically be integrated.
+
+## Requirements
+
+This extension expects `Rscript` to be in the path, or pointed with the `RTestAdapter.RscriptPath` setting, and requires `devtools` to be installed for the environment Rscript is connected to. No other dependencies are expected.

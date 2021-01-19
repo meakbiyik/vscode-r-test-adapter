@@ -9,7 +9,9 @@ import * as fs from "fs";
 import { TestInfo, TestSuiteInfo } from "vscode-test-adapter-api";
 import * as chai from "chai";
 import * as deepEqualInAnyOrder from 'deep-equal-in-any-order';
+import * as chaiAsPromised from 'chai-as-promised';
 
+chai.use(chaiAsPromised);
 chai.use(deepEqualInAnyOrder);
 const expect = chai.expect
 
@@ -53,7 +55,7 @@ suite("TestthatAdapter", () => {
         expect(testLoadFinishedFiredFlag).to.be.true;
         testAdapter.dispose();
         await tmpFileResult.cleanup()
-        await sleep(1000); //await for cleanup
+        await sleep(2500); //await for cleanup
     });
 
     test("Tests are loaded correctly", async () => {
@@ -66,6 +68,35 @@ suite("TestthatAdapter", () => {
         (<any>testAdapter).isLoading = true;
         let tests = await testAdapter.loadTests()
         expect(tests).to.be.deep.equalInAnyOrder(testRepoStructure);
+        testAdapter.dispose();
+    });
+
+    test("Tests are run as expected", async () => {
+        // check for any temp files not yet removed from directory
+        let tempTestFiles = await vscode.workspace.findFiles("**/tests/testthat/**/test-temp*.R");
+        for (const file of tempTestFiles) {
+            fs.unlinkSync(file.fsPath)
+        }
+        let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
+        testAdapter.testSuite = testRepoStructure;
+        let testStatesRunningFlag = false;
+        let testStatesErroredFailedFlag = false;
+        let testStatesPassed = false;
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "running") testStatesRunningFlag = true;
+        });
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && ["failed", "errored"].includes(e.state)) testStatesErroredFailedFlag = true;
+        });
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" &&  e.state == "passed") testStatesPassed = true;
+        });
+        (<any>testAdapter).isRunning = true;
+        expect(testAdapter.runTests(["root"])).to.eventually.be.fulfilled
+        await sleep(5000); // ensure events are fired
+        expect(testStatesRunningFlag).to.be.true
+        expect(testStatesErroredFailedFlag).to.be.false
+        expect(testStatesPassed).to.be.true
         testAdapter.dispose();
     });
 
