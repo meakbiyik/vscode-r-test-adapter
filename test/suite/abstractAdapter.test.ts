@@ -168,7 +168,7 @@ suite("abstractAdapter", () => {
         let childProcess = exec(command, (err, _stdout: string, stderr: string) => {if (err) errorInProcess=true;});
         testAdapter.childProcess = childProcess;
         testAdapter.cancel()
-        await sleep(2000); // especially in local, it takes some time to cancel
+        await sleep(5000); // especially in local, it takes some time to cancel
         expect(childProcess.killed && errorInProcess).to.be.true
         testAdapter.dispose();
     })
