@@ -14,12 +14,13 @@ const appendFile = util.promisify(_appendFile);
 
 export async function runAllTests(adapter: TestthatAdapter): Promise<string> {
     let devtoolsCall = `options("testthat.use_colours"=F);devtools::test('.')`;
-    let command = `Rscript -e "${devtoolsCall}"`;
+    let RscriptCommand = getRscriptCommand()
+    let command = `${RscriptCommand} -e "${devtoolsCall}"`;
     let cwd = vscode.workspace.workspaceFolders![0].uri.fsPath;
-    return new Promise(async (resolve) => {
+    return new Promise(async (resolve, reject) => {
         let childProcess = exec(command, { cwd }, (err, stdout: string, stderr: string) => {
-            if (err) throw stderr;
             adapter.childProcess = undefined;
+            if (err) reject(stderr);
             resolve(stdout);
         });
         adapter.childProcess = childProcess;
@@ -31,12 +32,13 @@ export async function runSingleTestFile(
     filePath: string
 ): Promise<string> {
     let devtoolsCall = `options("testthat.use_colours"=F);devtools::test_file('${filePath.replace(/\\/g, "/")}')`;
-    let command = `Rscript -e "${devtoolsCall}"`;
+    let RscriptCommand = getRscriptCommand()
+    let command = `${RscriptCommand} -e "${devtoolsCall}"`;
     let cwd = vscode.workspace.workspaceFolders![0].uri.fsPath;
-    return new Promise(async (resolve) => {
+    return new Promise(async (resolve, reject) => {
         let childProcess = exec(command, { cwd }, (err, stdout: string, stderr: string) => {
-            if (err) throw stderr;
             adapter.childProcess = undefined;
+            if (err) reject(stderr);
             resolve(stdout);
         });
         adapter.childProcess = childProcess;
@@ -78,6 +80,16 @@ export async function runTest(adapter: TestthatAdapter, test: TestInfo) {
             await tmpFileResult.cleanup();
             return value;
         });
+}
+
+function getRscriptCommand() {
+    let config = vscode.workspace.getConfiguration("RTestAdapter")
+    let path = config.get("RscriptPath")
+    if(path == undefined || (<string>path).length == 0){
+        return "RScript"
+    } else {
+        return `"${path}"`
+    }
 }
 
 function getRangeOfTest(label: string, source: string) {
