@@ -58,12 +58,7 @@ export async function parseTestsFromFile(
 
 function execute_R_parser(uri: vscode.Uri) {
     let filePath = uri.fsPath;
-    let treeSitterCmd;
-    if (process.platform=="win32") {
-        treeSitterCmd = path.join(treeSitterRPath, "..", ".bin", "tree-sitter.cmd")
-    } else {
-        treeSitterCmd = path.join(treeSitterRPath, "..", ".bin", "tree-sitter")
-    }
+    let treeSitterCmd = path.join(treeSitterRPath, "..", "tree-sitter-cli", "tree-sitter");
     let command = `${treeSitterCmd} query ${queryPath} ${filePath} -c`;
     return exec(command, { cwd: treeSitterRPath });
 }
