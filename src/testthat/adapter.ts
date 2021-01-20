@@ -143,7 +143,7 @@ export class TestthatAdapter extends RAdapter {
                             type: "test",
                             test: test.id,
                             state: "errored",
-                            message: error
+                            message: error,
                         });
                     }
                 }
@@ -203,7 +203,7 @@ export class TestthatAdapter extends RAdapter {
                         type: "test",
                         test: test.id,
                         state: "errored",
-                        message: error
+                        message: error,
                     });
                 }
             }
@@ -252,8 +252,8 @@ export class TestthatAdapter extends RAdapter {
                 testStatesEmitter.fire(<TestEvent>{
                     type: "test",
                     test: node.id,
-                    state: "errored",                        
-                    message: error
+                    state: "errored",
+                    message: error,
                 });
             }
         }
@@ -267,8 +267,8 @@ export class TestthatAdapter extends RAdapter {
             let testLabel = match.groups!["label"];
             let fileName = filename ? filename : match.groups!["fileName"];
             let reason = match.groups!["reason"];
-            let id = encodeNodeId(fileName, testLabel)
-            let previousReasons = failedTests.get(id)?failedTests.get(id):""
+            let id = encodeNodeId(fileName, testLabel);
+            let previousReasons = failedTests.get(id) ? failedTests.get(id) : "";
             failedTests.set(id, previousReasons + reason + "\n\n");
         }
         return failedTests;
@@ -282,8 +282,8 @@ export class TestthatAdapter extends RAdapter {
             let testLabel = match.groups!["label"];
             let fileName = filename ? filename : match.groups!["fileName"];
             let reason = match.groups!["reason"];
-            let id = encodeNodeId(fileName, testLabel)
-            let previousReasons = skippedTests.get(id)?skippedTests.get(id):""
+            let id = encodeNodeId(fileName, testLabel);
+            let previousReasons = skippedTests.get(id) ? skippedTests.get(id) : "";
             skippedTests.set(id, previousReasons + reason + "\n\n");
         }
         return skippedTests;

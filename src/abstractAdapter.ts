@@ -16,7 +16,7 @@ import { ChildProcess } from "child_process";
 
 export abstract class RAdapter implements TestAdapter {
     public disposables: { dispose(): void }[] = [];
-    public childProcess: ChildProcess|undefined = undefined;
+    public childProcess: ChildProcess | undefined = undefined;
     public tempFilePaths: Set<string> = new Set();
 
     readonly testsEmitter = new vscode.EventEmitter<TestLoadStartedEvent | TestLoadFinishedEvent>();
@@ -24,9 +24,9 @@ export abstract class RAdapter implements TestAdapter {
         TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent
     >();
     readonly autorunEmitter = new vscode.EventEmitter<void>();
-    
+
     private isLoading = false;
-    private isRunning = false; 
+    private isRunning = false;
     private loadTimeout = setTimeout(() => {}, 1);
 
     public abstract watcher: vscode.FileSystemWatcher;
@@ -114,7 +114,7 @@ export abstract class RAdapter implements TestAdapter {
         this.isRunning = false;
 
         this.testStatesEmitter.fire(<TestRunFinishedEvent>{ type: "finished" });
-        
+
         this.log.info(`Canceled ${this.name} processes`);
     }
 

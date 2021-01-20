@@ -6,14 +6,7 @@ import { exec as _exec } from "child_process";
 import { RAdapter } from "../abstractAdapter";
 
 const treeSitterRPath = path.join(__dirname, "..", "..", "..", "node_modules", "tree-sitter-r");
-const queryPath = path.join(
-    __dirname,
-    "..",
-    "..",
-    "..",
-    "query",
-    "detect_testthat.scm"
-);
+const queryPath = path.join(__dirname, "..", "..", "..", "query", "detect_testthat.scm");
 const exec = util.promisify(_exec);
 
 export async function parseTestsFromFile(
@@ -59,9 +52,13 @@ export async function parseTestsFromFile(
 function execute_R_parser(uri: vscode.Uri) {
     let filePath = uri.fsPath;
     let treeSitterCmd;
-    if(process.platform == "win32") {
-		treeSitterCmd = `start /B "${path.join(treeSitterRPath, "..", "tree-sitter-cli")}" tree-sitter`
-	} else {
+    if (process.platform == "win32") {
+        treeSitterCmd = `start /B "${path.join(
+            treeSitterRPath,
+            "..",
+            "tree-sitter-cli"
+        )}" tree-sitter`;
+    } else {
         treeSitterCmd = path.join(treeSitterRPath, "..", "tree-sitter-cli", "tree-sitter");
     }
     let command = `${treeSitterCmd} query ${queryPath} ${filePath} -c`;

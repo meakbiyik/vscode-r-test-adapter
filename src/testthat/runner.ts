@@ -18,15 +18,19 @@ let RscriptPath: string | undefined;
 
 export async function runAllTests(adapter: TestthatAdapter): Promise<string> {
     let devtoolsCall = `options("testthat.use_colours"=F);devtools::test('.')`;
-    let RscriptCommand = await getRscriptCommand(adapter)
+    let RscriptCommand = await getRscriptCommand(adapter);
     let command = `${RscriptCommand} -e "${devtoolsCall}"`;
     let cwd = vscode.workspace.workspaceFolders![0].uri.fsPath;
     return new Promise(async (resolve, reject) => {
-        let childProcess = exec(command, { cwd, env:process.env }, (err, stdout: string, stderr: string) => {
-            adapter.childProcess = undefined;
-            if (err) reject(stderr);
-            resolve(stdout);
-        });
+        let childProcess = exec(
+            command,
+            { cwd, env: process.env },
+            (err, stdout: string, stderr: string) => {
+                adapter.childProcess = undefined;
+                if (err) reject(stderr);
+                resolve(stdout);
+            }
+        );
         adapter.childProcess = childProcess;
     });
 }
@@ -35,8 +39,11 @@ export async function runSingleTestFile(
     adapter: TestthatAdapter,
     filePath: string
 ): Promise<string> {
-    let devtoolsCall = `options("testthat.use_colours"=F);devtools::test_file('${filePath.replace(/\\/g, "/")}')`;
-    let RscriptCommand = await getRscriptCommand(adapter)
+    let devtoolsCall = `options("testthat.use_colours"=F);devtools::test_file('${filePath.replace(
+        /\\/g,
+        "/"
+    )}')`;
+    let RscriptCommand = await getRscriptCommand(adapter);
     let command = `${RscriptCommand} -e "${devtoolsCall}"`;
     let cwd = vscode.workspace.workspaceFolders![0].uri.fsPath;
     return new Promise(async (resolve, reject) => {
@@ -65,11 +72,11 @@ export async function runTest(adapter: TestthatAdapter, test: TestInfo) {
         }
     }
 
-    let randomFileInfix = randomChars()
-    let tmpFileName = `test-${randomFileInfix}.R`
-    let tmpFilePath = path.normalize(path.join(path.dirname(test.file!), tmpFileName))
-    adapter.tempFilePaths.add(tmpFilePath); // Do not clean up tempFilePaths, not possible to get around the race condition 
-                                            // cleanup is not guaranteed to unlink the file immediately
+    let randomFileInfix = randomChars();
+    let tmpFileName = `test-${randomFileInfix}.R`;
+    let tmpFilePath = path.normalize(path.join(path.dirname(test.file!), tmpFileName));
+    adapter.tempFilePaths.add(tmpFilePath); // Do not clean up tempFilePaths, not possible to get around the race condition
+    // cleanup is not guaranteed to unlink the file immediately
     let tmpFileResult = await tmp.file({
         name: tmpFileName,
         tmpdir: path.dirname(test.file!),
@@ -87,23 +94,26 @@ export async function runTest(adapter: TestthatAdapter, test: TestInfo) {
 }
 
 async function getRscriptCommand(adapter: TestthatAdapter) {
-    let config = vscode.workspace.getConfiguration("RTestAdapter")
-    let configPath: string | undefined = config.get("RscriptPath")
-    if (configPath != undefined){
-        if ((<string>configPath).length > 0 && fs.existsSync(configPath)) return Promise.resolve(`"${configPath}"`)
+    let config = vscode.workspace.getConfiguration("RTestAdapter");
+    let configPath: string | undefined = config.get("RscriptPath");
+    if (configPath != undefined) {
+        if ((<string>configPath).length > 0 && fs.existsSync(configPath))
+            return Promise.resolve(`"${configPath}"`);
         else {
-            adapter.log.warn(`Rscript path given in the configuration ${configPath} is invalid. Falling back to defaults.`)
+            adapter.log.warn(
+                `Rscript path given in the configuration ${configPath} is invalid. Falling back to defaults.`
+            );
         }
     }
     if (RscriptPath != undefined) return Promise.resolve(`"${RscriptPath}"`);
-    RscriptPath = await lookpath('Rscript');
+    RscriptPath = await lookpath("Rscript");
     if (RscriptPath != undefined) return Promise.resolve(`"${RscriptPath}"`);
-    if (process.platform != "win32"){
-        let candidates = ["/usr/bin", "/usr/local/bin"]
+    if (process.platform != "win32") {
+        let candidates = ["/usr/bin", "/usr/local/bin"];
         for (const candidate of candidates) {
-            let possibleRscriptPath = path.join(candidate, "Rscript")
-            if (fs.existsSync(possibleRscriptPath)){
-                adapter.log.info(`found Rscript among candidate paths: ${possibleRscriptPath}`)
+            let possibleRscriptPath = path.join(candidate, "Rscript");
+            if (fs.existsSync(possibleRscriptPath)) {
+                adapter.log.info(`found Rscript among candidate paths: ${possibleRscriptPath}`);
                 RscriptPath = possibleRscriptPath;
                 return Promise.resolve(`"${RscriptPath}"`);
             }
@@ -112,22 +122,23 @@ async function getRscriptCommand(adapter: TestthatAdapter) {
         try {
             const key = new winreg({
                 hive: winreg.HKLM,
-                key: '\\Software\\R-Core\\R'
+                key: "\\Software\\R-Core\\R",
             });
             const item: winreg.RegistryItem = await new Promise((resolve, reject) =>
-                key.get('InstallPath', (err, result) => err ? reject(err) : resolve(result)));
-        
+                key.get("InstallPath", (err, result) => (err ? reject(err) : resolve(result)))
+            );
+
             const rhome = item.value;
-        
+
             let possibleRscriptPath = rhome + "\\bin\\Rscript.exe";
-            if (fs.existsSync(possibleRscriptPath)){
-                adapter.log.info(`found Rscript in registry: ${possibleRscriptPath}`)
+            if (fs.existsSync(possibleRscriptPath)) {
+                adapter.log.info(`found Rscript in registry: ${possibleRscriptPath}`);
                 RscriptPath = possibleRscriptPath;
                 return Promise.resolve(`"${RscriptPath}"`);
             }
         } catch (e) {}
     }
-    throw Error("Rscript could not be found in PATH, cannot run the tests.")
+    throw Error("Rscript could not be found in PATH, cannot run the tests.");
 }
 
 function getRangeOfTest(label: string, source: string) {
@@ -148,24 +159,22 @@ function getRangeOfTest(label: string, source: string) {
 }
 
 function randomChars() {
-    
-    const RANDOM_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+    const RANDOM_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     const count = 12;
 
-    let
-      value = [],
-      rnd = null;
-  
+    let value = [],
+        rnd = null;
+
     // make sure that we do not fail because we ran out of entropy
     try {
-      rnd = crypto.randomBytes(count);
+        rnd = crypto.randomBytes(count);
     } catch (e) {
-      rnd = crypto.pseudoRandomBytes(count);
+        rnd = crypto.pseudoRandomBytes(count);
     }
-  
+
     for (var i = 0; i < 12; i++) {
-      value.push(RANDOM_CHARS[rnd[i] % RANDOM_CHARS.length]);
+        value.push(RANDOM_CHARS[rnd[i] % RANDOM_CHARS.length]);
     }
-  
-    return value.join('');
+
+    return value.join("");
 }
