@@ -110,7 +110,6 @@ export class TestthatAdapter extends RAdapter {
                 let stdout = await runAllTests(this);
                 let failedTests = this.getFailedTests(stdout);
                 let skippedTests = this.getSkippedTests(stdout);
-                console.log(stdout)
                 for (const file of <TestSuiteInfo[]>node.children) {
                     for (const test of file.children) {
                         if (failedTests.has(test.id)) {
@@ -137,7 +136,6 @@ export class TestthatAdapter extends RAdapter {
                     }
                 }
             } catch (error) {
-                console.log(error)
                 this.log.error(error);
                 for (const file of <TestSuiteInfo[]>node.children) {
                     for (const test of file.children) {

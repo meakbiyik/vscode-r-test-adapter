@@ -24,7 +24,7 @@ export async function runAllTests(adapter: TestthatAdapter): Promise<string> {
     return new Promise(async (resolve, reject) => {
         let childProcess = exec(command, { cwd, env:process.env }, (err, stdout: string, stderr: string) => {
             adapter.childProcess = undefined;
-            if (err) {console.log(err);console.log(process.env); reject(stderr)};
+            if (err) reject(stderr);
             resolve(stdout);
         });
         adapter.childProcess = childProcess;
@@ -122,7 +122,6 @@ async function getRscriptCommand(adapter: TestthatAdapter) {
             let possibleRscriptPath = rhome + "\\bin\\Rscript.exe";
             if (fs.existsSync(possibleRscriptPath)){
                 adapter.log.info(`found Rscript in registry: ${possibleRscriptPath}`)
-                console.log("found Rscript in registry:", possibleRscriptPath)
                 RscriptPath = possibleRscriptPath;
                 return Promise.resolve(`"${RscriptPath}"`);
             }
