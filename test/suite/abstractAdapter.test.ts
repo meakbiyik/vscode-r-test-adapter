@@ -169,7 +169,8 @@ suite("abstractAdapter", () => {
         testAdapter.childProcess = childProcess;
         testAdapter.cancel()
         await sleep(5000); // especially in local, it takes some time to cancel
-        expect(childProcess.killed && errorInProcess).to.be.true
+        expect(childProcess.killed).to.be.true
+        expect(errorInProcess).to.be.true
         testAdapter.dispose();
     })
 

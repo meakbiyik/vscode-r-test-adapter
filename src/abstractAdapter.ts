@@ -106,7 +106,7 @@ export abstract class RAdapter implements TestAdapter {
 
         this.log.info(`Canceling ${this.name} processes`);
 
-        this.childProcess.kill();
+        this.childProcess.kill("SIGINT");
         if (process.platform == "win32") {
             exec(`taskkill /pid  ${this.childProcess.pid} /f /t`);
         }
