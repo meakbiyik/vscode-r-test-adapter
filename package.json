@@ -44,12 +44,14 @@
     "coverage": "nyc -x .vscode-test/ -a true -i ts-node/register -i source-map-support/register -r lcov -e .ts -x \"*.test.ts\" npm run test"
   },
   "dependencies": {
+    "lookpath": "^1.1.0",
     "tmp-promise": "^3.0.2",
     "tree-sitter-cli": "^0.18.0",
     "tree-sitter-r": "git+https://github.com/r-lib/tree-sitter-r.git",
     "tslib": "^1.9.3",
     "vscode-test-adapter-api": "^1.7.0",
-    "vscode-test-adapter-util": "^0.7.0"
+    "vscode-test-adapter-util": "^0.7.0",
+    "winreg": "^1.2.4"
   },
   "devDependencies": {
     "@types/chai": "^4.2.14",
@@ -58,6 +60,7 @@
     "@types/glob": "^7.1.3",
     "@types/mocha": "^8.2.0",
     "@types/vscode": "^1.23.0",
+    "@types/winreg": "^1.2.30",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "deep-equal-in-any-order": "^1.0.28",
