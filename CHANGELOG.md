@@ -6,22 +6,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ## Added
-- Rscript path support with `RTestAdapter.RscriptPath` configuration.
-- More tests for adapter run checks
 ## Changed
 ## Removed
 ## Fixed
 
-## [0.1.2]
+## [0.2.0] - 20.01.2021
+## Added
+- Much better Rscript path resolution
+- Rscript path support with `RTestAdapter.RscriptPath` configuration.
+- More tests for adapter run checks
+
+## Changed
+- Cancel processes with "SIGINT" instead of "SIGTERM" on command.
+
+## [0.1.2] - 19.01.2021
 ## Fixed
 - Binary path resolution for all platforms
 
-## [0.1.1]
+## [0.1.1] - 19.01.2021
 ## Fixed
 - tree-sitter path resolution for Windows
 - Some possible issues with tree-sitter output parser
 
-## [0.1.0]
+## [0.1.0] - 18.01.2021
 ### Added
 - Better testing
 
@@ -42,7 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release of the VS Code R Test Explorer extension.
 - Contains the infrastructure to parse and run R tests written with testthat framework.
 
-[Unreleased]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.0.2...v0.1.0
