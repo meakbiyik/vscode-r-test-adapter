@@ -8,12 +8,11 @@ import { exec } from "child_process";
 import { RAdapter } from "../../src/abstractAdapter";
 import { TestSuiteInfo } from "vscode-test-adapter-api";
 
-const testRepoPath = path.join(__dirname, "..", "..", "..", "test", "testRepo")
-const testRepoTestsPath = path.join(testRepoPath, "tests", "testthat") 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const testRepoPath = path.join(__dirname, "..", "..", "..", "test", "testRepo");
+const testRepoTestsPath = path.join(testRepoPath, "tests", "testthat");
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export class FakeAdapter extends RAdapter {
-
     public watcher: vscode.FileSystemWatcher;
 
     constructor(public readonly workspace: vscode.WorkspaceFolder, public readonly log: Log) {
@@ -32,17 +31,20 @@ export class FakeAdapter extends RAdapter {
         this.disposables.push(this.watcher);
     }
 
-    loadTests () {return <Promise<TestSuiteInfo>> {}};
-    runTests(a: string[]) {return <Promise<void>> {}};
-
+    loadTests() {
+        return <Promise<TestSuiteInfo>>{};
+    }
+    runTests(a: string[]) {
+        return <Promise<void>>{};
+    }
 }
 
 suite("abstractAdapter", () => {
-    const workspaceFolder = <vscode.WorkspaceFolder> {
+    const workspaceFolder = <vscode.WorkspaceFolder>{
         uri: vscode.Uri.file(testRepoPath),
         name: "testRepo",
-        index: 0
-    }
+        index: 0,
+    };
     const log = new Log("FakeExplorer", workspaceFolder, "Fake Explorer Log");
 
     test("Is constructed properly", () => {
@@ -62,7 +64,7 @@ suite("abstractAdapter", () => {
                 children: [],
             });
         };
-        let tmpFileName = `test-temp${randomChars()}.R`
+        let tmpFileName = `test-temp${randomChars()}.R`;
         let testLoadStartedFiredFlag = false;
         let testLoadFinishedFiredFlag = false;
         testAdapter.testsEmitter.event((e) => {
@@ -73,13 +75,13 @@ suite("abstractAdapter", () => {
         });
         let tmpFileResult = await tmp.file({
             name: tmpFileName,
-            tmpdir: testRepoTestsPath
+            tmpdir: testRepoTestsPath,
         });
         await sleep(5000);
         expect(testLoadStartedFiredFlag).to.be.true;
         expect(testLoadFinishedFiredFlag).to.be.true;
         testAdapter.dispose();
-        await tmpFileResult.cleanup()
+        await tmpFileResult.cleanup();
         await sleep(1000); //await for cleanup
     });
 
@@ -93,8 +95,8 @@ suite("abstractAdapter", () => {
                 children: [],
             });
         };
-        let tmpFileName = `test-temp${randomChars()}.R`
-        let tmpFilePath = path.normalize(path.join(testRepoTestsPath, tmpFileName))
+        let tmpFileName = `test-temp${randomChars()}.R`;
+        let tmpFilePath = path.normalize(path.join(testRepoTestsPath, tmpFileName));
         testAdapter.tempFilePaths.add(tmpFilePath);
         let testLoadStartedFiredFlag = false;
         let testLoadFinishedFiredFlag = false;
@@ -106,13 +108,13 @@ suite("abstractAdapter", () => {
         });
         let tmpFileResult = await tmp.file({
             name: tmpFileName,
-            tmpdir: testRepoTestsPath
+            tmpdir: testRepoTestsPath,
         });
         await sleep(5000);
         expect(testLoadStartedFiredFlag).to.be.false;
         expect(testLoadFinishedFiredFlag).to.be.false;
         testAdapter.dispose();
-        await tmpFileResult.cleanup()
+        await tmpFileResult.cleanup();
         await sleep(1000); //await for cleanup
     });
 
@@ -165,41 +167,40 @@ suite("abstractAdapter", () => {
         let command = `Rscript -e "${sleepCall}"`;
         let errorInProcess = false;
         (<any>testAdapter).isRunning = true;
-        let childProcess = exec(command, (err, _stdout: string, stderr: string) => {if (err) errorInProcess=true;});
+        let childProcess = exec(command, (err, _stdout: string, stderr: string) => {
+            if (err) errorInProcess = true;
+        });
         testAdapter.childProcess = childProcess;
-        testAdapter.cancel()
+        testAdapter.cancel();
         await sleep(5000); // especially in local, it takes some time to cancel
-        expect(childProcess.killed).to.be.true
-        expect(errorInProcess).to.be.true
+        expect(childProcess.killed).to.be.true;
+        expect(errorInProcess).to.be.true;
         testAdapter.dispose();
-    })
+    });
 
     test("Disposable without error", () => {
         let testAdapter = new FakeAdapter(workspaceFolder, log);
         testAdapter.dispose();
     });
-
 });
 
 function randomChars() {
-    
-    const RANDOM_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+    const RANDOM_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     const count = 12;
 
-    let
-      value = [],
-      rnd = null;
-  
+    let value = [],
+        rnd = null;
+
     // make sure that we do not fail because we ran out of entropy
     try {
-      rnd = crypto.randomBytes(count);
+        rnd = crypto.randomBytes(count);
     } catch (e) {
-      rnd = crypto.pseudoRandomBytes(count);
+        rnd = crypto.pseudoRandomBytes(count);
     }
-  
+
     for (var i = 0; i < 12; i++) {
-      value.push(RANDOM_CHARS[rnd[i] % RANDOM_CHARS.length]);
+        value.push(RANDOM_CHARS[rnd[i] % RANDOM_CHARS.length]);
     }
-  
-    return value.join('');
+
+    return value.join("");
 }

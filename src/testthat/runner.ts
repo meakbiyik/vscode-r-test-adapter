@@ -56,7 +56,7 @@ export async function runSingleTestFile(
     });
 }
 
-export async function runTest(adapter: TestthatAdapter, test: TestInfo) {
+export async function runSingleTest(adapter: TestthatAdapter, test: TestInfo) {
     let documentUri = Uri.file(test.file!);
     let document = await workspace.openTextDocument(documentUri);
     let source = document.getText();

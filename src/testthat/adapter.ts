@@ -8,9 +8,10 @@ import {
     TestEvent,
 } from "vscode-test-adapter-api";
 import { Log } from "vscode-test-adapter-util";
+import * as path from "path";
 import { RAdapter } from "../abstractAdapter";
 import { parseTestsFromFile, encodeNodeId } from "./parser";
-import { runAllTests, runSingleTestFile, runTest } from "./runner";
+import { runAllTests, runSingleTestFile, runSingleTest } from "./runner";
 
 export class TestthatAdapter extends RAdapter {
     testSuite!: TestSuiteInfo;
@@ -49,6 +50,7 @@ export class TestthatAdapter extends RAdapter {
         }
 
         for (const testFile of testFiles) {
+            if (this.tempFilePaths.has(path.normalize(testFile.fsPath))) continue;
             try {
                 let tests_in_file = await parseTestsFromFile(this, testFile);
                 this.testSuite.children.push(tests_in_file);
@@ -89,174 +91,100 @@ export class TestthatAdapter extends RAdapter {
             TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent
         > = this.testStatesEmitter;
 
-        if (node.type === "suite" && node.id === "root") {
-            testStatesEmitter.fire(<TestSuiteEvent>{
-                type: "suite",
-                suite: node.id,
-                state: "running",
-            });
+        let stdout: string | undefined;
 
-            for (const file of <TestSuiteInfo[]>node.children) {
-                for (const test of file.children) {
-                    testStatesEmitter.fire(<TestEvent>{
-                        type: "test",
-                        test: test.id,
-                        state: "running",
-                    });
-                }
-            }
-
-            try {
-                let stdout = await runAllTests(this);
-                let failedTests = this.getFailedTests(stdout);
-                let skippedTests = this.getSkippedTests(stdout);
-                for (const file of <TestSuiteInfo[]>node.children) {
-                    for (const test of file.children) {
-                        if (failedTests.has(test.id)) {
-                            testStatesEmitter.fire(<TestEvent>{
-                                type: "test",
-                                test: test.id,
-                                state: "failed",
-                                message: failedTests.get(test.id),
-                            });
-                        } else if (skippedTests.has(test.id)) {
-                            testStatesEmitter.fire(<TestEvent>{
-                                type: "test",
-                                test: test.id,
-                                state: "skipped",
-                                message: skippedTests.get(test.id),
-                            });
-                        } else {
-                            testStatesEmitter.fire(<TestEvent>{
-                                type: "test",
-                                test: test.id,
-                                state: "passed",
-                            });
-                        }
-                    }
-                }
-            } catch (error) {
-                this.log.error(error);
-                for (const file of <TestSuiteInfo[]>node.children) {
-                    for (const test of file.children) {
-                        testStatesEmitter.fire(<TestEvent>{
-                            type: "test",
-                            test: test.id,
-                            state: "errored",
-                            message: error,
-                        });
-                    }
-                }
-            }
-
-            testStatesEmitter.fire(<TestSuiteEvent>{
-                type: "suite",
-                suite: node.id,
-                state: "completed",
-            });
-        } else if (node.type === "suite") {
-            testStatesEmitter.fire(<TestSuiteEvent>{
-                type: "suite",
-                suite: node.id,
-                state: "running",
-            });
-
-            for (const test of node.children) {
+        this.callRecursive(node, (node) => {
+            if (node.type === "suite") {
+                testStatesEmitter.fire(<TestSuiteEvent>{
+                    type: "suite",
+                    suite: node.id,
+                    state: "running",
+                });
+            } else {
                 testStatesEmitter.fire(<TestEvent>{
                     type: "test",
-                    test: test.id,
+                    test: node.id,
                     state: "running",
                 });
             }
+        });
 
-            try {
-                let stdout = await runSingleTestFile(this, node.file!);
-                let failedTests = this.getFailedTests(stdout);
-                let skippedTests = this.getSkippedTests(stdout);
-                for (const test of node.children) {
-                    if (failedTests.has(test.id)) {
-                        testStatesEmitter.fire(<TestEvent>{
-                            type: "test",
-                            test: test.id,
-                            state: "failed",
-                            message: failedTests.get(test.id),
-                        });
-                    } else if (skippedTests.has(test.id)) {
-                        testStatesEmitter.fire(<TestEvent>{
-                            type: "test",
-                            test: test.id,
-                            state: "skipped",
-                            message: skippedTests.get(test.id),
-                        });
-                    } else {
-                        testStatesEmitter.fire(<TestEvent>{
-                            type: "test",
-                            test: test.id,
-                            state: "passed",
-                        });
-                    }
-                }
-            } catch (error) {
-                this.log.error(error);
-                for (const test of node.children) {
+        try {
+            if (node.type === "suite" && node.id === "root") {
+                stdout = await runAllTests(this);
+            } else if (node.type === "suite") {
+                stdout = await runSingleTestFile(this, node.file!);
+            } else {
+                stdout = await runSingleTest(this, node);
+            }
+        } catch (error) {
+            this.log.error(error);
+            this.callRecursive(node, (node) => {
+                if (node.type === "test") {
                     testStatesEmitter.fire(<TestEvent>{
                         type: "test",
-                        test: test.id,
+                        test: node.id,
                         state: "errored",
                         message: error,
                     });
                 }
+            });
+        }
+
+        if (stdout != undefined) {
+            this.emitTestResults(stdout, node, testStatesEmitter);
+        }
+
+        this.callRecursive(node, (node) => {
+            if (node.type === "suite") {
+                testStatesEmitter.fire(<TestSuiteEvent>{
+                    type: "suite",
+                    suite: node.id,
+                    state: "completed",
+                });
             }
+        });
+    }
 
-            testStatesEmitter.fire(<TestSuiteEvent>{
-                type: "suite",
-                suite: node.id,
-                state: "completed",
-            });
-        } else {
-            // node.type === 'test'
+    callRecursive(
+        startNode: TestSuiteInfo | TestInfo,
+        func: (node: TestSuiteInfo | TestInfo) => void
+    ) {
+        func(startNode);
+        if (startNode.type === "suite") {
+            for (const child of startNode.children) this.callRecursive(child, func);
+        }
+    }
 
-            testStatesEmitter.fire(<TestEvent>{
-                type: "test",
-                test: node.id,
-                state: "running",
-            });
-
-            try {
-                let stdout = await runTest(this, node);
-                let failedTests = this.getFailedTests(stdout, node.id.split("&")[0]);
-                let skippedTests = this.getSkippedTests(stdout, node.id.split("&")[0]);
+    emitTestResults(
+        stdout: string,
+        node: TestSuiteInfo | TestInfo,
+        testStatesEmitter: vscode.EventEmitter<
+            TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent
+        >
+    ) {
+        let failedTests = this.getFailedTests(stdout);
+        let skippedTests = this.getSkippedTests(stdout);
+        this.callRecursive(node, (node) => {
+            if (node.type === "test") {
+                let state = "passed";
+                let message = undefined;
                 if (failedTests.has(node.id)) {
-                    testStatesEmitter.fire(<TestEvent>{
-                        type: "test",
-                        test: node.id,
-                        state: "failed",
-                        message: failedTests.get(node.id),
-                    });
-                } else if (skippedTests.has(node.id)) {
-                    testStatesEmitter.fire(<TestEvent>{
-                        type: "test",
-                        test: node.id,
-                        state: "skipped",
-                        message: skippedTests.get(node.id),
-                    });
-                } else {
-                    testStatesEmitter.fire(<TestEvent>{
-                        type: "test",
-                        test: node.id,
-                        state: "passed",
-                    });
+                    state = "failed";
+                    message = failedTests.get(node.id);
                 }
-            } catch (error) {
-                this.log.error(error);
+                if (skippedTests.has(node.id)) {
+                    state = "skipped";
+                    message = skippedTests.get(node.id);
+                }
                 testStatesEmitter.fire(<TestEvent>{
                     type: "test",
                     test: node.id,
-                    state: "errored",
-                    message: error,
+                    state: state,
+                    message: message,
                 });
             }
-        }
+        });
     }
 
     getFailedTests(stdout: string, filename?: string) {

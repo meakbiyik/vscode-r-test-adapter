@@ -8,23 +8,23 @@ import * as util from "util";
 import * as fs from "fs";
 import { TestInfo, TestSuiteInfo } from "vscode-test-adapter-api";
 import * as chai from "chai";
-import * as deepEqualInAnyOrder from 'deep-equal-in-any-order';
-import * as chaiAsPromised from 'chai-as-promised';
+import * as deepEqualInAnyOrder from "deep-equal-in-any-order";
+import * as chaiAsPromised from "chai-as-promised";
 
 chai.use(chaiAsPromised);
 chai.use(deepEqualInAnyOrder);
-const expect = chai.expect
+const expect = chai.expect;
 
-const testRepoPath = path.join(__dirname, "..", "..", "..", "..", "test", "testRepo")
-const testRepoTestsPath = path.join(testRepoPath, "tests", "testthat") 
-const sleep = util.promisify(setTimeout)
+const testRepoPath = path.join(__dirname, "..", "..", "..", "..", "test", "testRepo");
+const testRepoTestsPath = path.join(testRepoPath, "tests", "testthat");
+const sleep = util.promisify(setTimeout);
 
 suite("TestthatAdapter", () => {
-    const workspaceFolder = <vscode.WorkspaceFolder> {
+    const workspaceFolder = <vscode.WorkspaceFolder>{
         uri: vscode.Uri.file(testRepoPath),
         name: "testRepo",
-        index: 0
-    }
+        index: 0,
+    };
     const log = new Log("RExplorer", workspaceFolder, "R Explorer Log");
 
     test("Is constructed properly", () => {
@@ -37,7 +37,7 @@ suite("TestthatAdapter", () => {
     test("Load is triggered on change", async () => {
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
         testAdapter.loadTests = () => <Promise<TestSuiteInfo>>{};
-        let tmpFileName = `test-temp${randomChars()}.R`
+        let tmpFileName = `test-temp${randomChars()}.R`;
         let testLoadStartedFiredFlag = false;
         let testLoadFinishedFiredFlag = false;
         testAdapter.testsEmitter.event((e) => {
@@ -48,13 +48,13 @@ suite("TestthatAdapter", () => {
         });
         let tmpFileResult = await tmp.file({
             name: tmpFileName,
-            tmpdir: testRepoTestsPath
+            tmpdir: testRepoTestsPath,
         });
         await sleep(5000);
         expect(testLoadStartedFiredFlag).to.be.true;
         expect(testLoadFinishedFiredFlag).to.be.true;
         testAdapter.dispose();
-        await tmpFileResult.cleanup()
+        await tmpFileResult.cleanup();
         await sleep(2500); //await for cleanup
     });
 
@@ -62,11 +62,13 @@ suite("TestthatAdapter", () => {
         // check for any temp files not yet removed from directory
         let tempTestFiles = await vscode.workspace.findFiles("**/tests/testthat/**/test-temp*.R");
         for (const file of tempTestFiles) {
-            fs.unlinkSync(file.fsPath)
+            try {
+                fs.unlinkSync(file.fsPath);
+            } catch (e) {}
         }
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
         (<any>testAdapter).isLoading = true;
-        let tests = await testAdapter.loadTests()
+        let tests = await testAdapter.loadTests();
         expect(tests).to.be.deep.equalInAnyOrder(testRepoStructure);
         testAdapter.dispose();
     });
@@ -75,7 +77,9 @@ suite("TestthatAdapter", () => {
         // check for any temp files not yet removed from directory
         let tempTestFiles = await vscode.workspace.findFiles("**/tests/testthat/**/test-temp*.R");
         for (const file of tempTestFiles) {
-            fs.unlinkSync(file.fsPath)
+            try {
+                fs.unlinkSync(file.fsPath);
+            } catch (e) {}
         }
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
         testAdapter.testSuite = testRepoStructure;
@@ -86,195 +90,192 @@ suite("TestthatAdapter", () => {
             if (e.type == "test" && e.state == "running") testStatesRunningFlag = true;
         });
         testAdapter.testStatesEmitter.event((e) => {
-            if (e.type == "test" && ["failed", "errored"].includes(e.state)) testStatesErroredFailedFlag = true;
+            if (e.type == "test" && ["failed", "errored"].includes(e.state))
+                testStatesErroredFailedFlag = true;
         });
         testAdapter.testStatesEmitter.event((e) => {
-            if (e.type == "test" &&  e.state == "passed") testStatesPassed = true;
+            if (e.type == "test" && e.state == "passed") testStatesPassed = true;
         });
         (<any>testAdapter).isRunning = true;
-        expect(testAdapter.runTests(["root"])).to.eventually.be.fulfilled
-        await sleep(5000); // ensure events are fired
-        expect(testStatesRunningFlag).to.be.true
-        expect(testStatesErroredFailedFlag).to.be.false
-        expect(testStatesPassed).to.be.true
+        expect(testAdapter.runTests(["root"])).to.eventually.be.fulfilled;
+        await sleep(10000); // ensure events are fired
+        expect(testStatesRunningFlag).to.be.true;
+        expect(testStatesErroredFailedFlag).to.be.false;
+        expect(testStatesPassed).to.be.true;
         testAdapter.dispose();
     });
-
 });
 
 function randomChars() {
-    
-    const RANDOM_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+    const RANDOM_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     const count = 12;
 
-    let
-      value = [],
-      rnd = null;
-  
-    try {
-      rnd = crypto.randomBytes(count);
-    } catch (e) {
-      rnd = crypto.pseudoRandomBytes(count);
-    }
-  
-    for (var i = 0; i < 12; i++) {
-      value.push(RANDOM_CHARS[rnd[i] % RANDOM_CHARS.length]);
-    }
-  
-    return value.join('');
-}
+    let value = [],
+        rnd = null;
 
+    try {
+        rnd = crypto.randomBytes(count);
+    } catch (e) {
+        rnd = crypto.pseudoRandomBytes(count);
+    }
+
+    for (var i = 0; i < 12; i++) {
+        value.push(RANDOM_CHARS[rnd[i] % RANDOM_CHARS.length]);
+    }
+
+    return value.join("");
+}
 
 const testRepoStructure: TestSuiteInfo = {
     type: "suite",
     id: "root",
     label: "R (testthat)",
     children: [
-        <TestSuiteInfo> { 
+        <TestSuiteInfo>{
             type: "suite",
             id: "test-username.R",
             label: "test-username.R",
             file: path.join(testRepoTestsPath, "test-username.R"),
             children: [
-                <TestInfo> {
+                <TestInfo>{
                     type: "test",
                     id: "test-username.R&username works",
                     label: "username works",
                     file: path.join(testRepoTestsPath, "test-username.R"),
                     line: 3,
                 },
-                <TestInfo> {
+                <TestInfo>{
                     type: "test",
                     id: "test-username.R&username fallback works",
                     label: "username fallback works",
                     file: path.join(testRepoTestsPath, "test-username.R"),
                     line: 13,
-                }
-            ]
+                },
+            ],
         },
-        <TestSuiteInfo> { 
+        <TestSuiteInfo>{
             type: "suite",
             id: "test-memoize.R",
             label: "test-memoize.R",
             file: path.join(testRepoTestsPath, "test-memoize.R"),
             children: [
-                <TestInfo> {
+                <TestInfo>{
                     type: "test",
                     id: "test-memoize.R&can memoize",
                     label: "can memoize",
                     file: path.join(testRepoTestsPath, "test-memoize.R"),
                     line: 3,
                 },
-                <TestInfo> {
+                <TestInfo>{
                     type: "test",
                     id: "test-memoize.R&non-string argument",
                     label: "non-string argument",
                     file: path.join(testRepoTestsPath, "test-memoize.R"),
                     line: 18,
-                }
-            ]
+                },
+            ],
         },
-        <TestSuiteInfo> { 
+        <TestSuiteInfo>{
             type: "suite",
             id: "test-gh-username.R",
             label: "test-gh-username.R",
             file: path.join(testRepoTestsPath, "test-gh-username.R"),
             children: [
-                <TestInfo> {
+                <TestInfo>{
                     type: "test",
                     id: "test-gh-username.R&Github username works",
                     label: "Github username works",
                     file: path.join(testRepoTestsPath, "test-gh-username.R"),
                     line: 3,
-                }
-            ]
+                },
+            ],
         },
-        <TestSuiteInfo> { 
+        <TestSuiteInfo>{
             type: "suite",
             id: "test-fullname.R",
             label: "test-fullname.R",
             file: path.join(testRepoTestsPath, "test-fullname.R"),
             children: [
-                <TestInfo> {
+                <TestInfo>{
                     type: "test",
                     id: "test-fullname.R&fullname fallback",
                     label: "fullname fallback",
                     file: path.join(testRepoTestsPath, "test-fullname.R"),
                     line: 3,
                 },
-                <TestInfo> {
+                <TestInfo>{
                     type: "test",
                     id: "test-fullname.R&fullname works",
                     label: "fullname works",
                     file: path.join(testRepoTestsPath, "test-fullname.R"),
                     line: 16,
                 },
-                <TestInfo> {
+                <TestInfo>{
                     type: "test",
                     id: "test-fullname.R&FULLNAME env var",
                     label: "FULLNAME env var",
                     file: path.join(testRepoTestsPath, "test-fullname.R"),
                     line: 26,
-                }
-            ]
+                },
+            ],
         },
-        <TestSuiteInfo> { 
+        <TestSuiteInfo>{
             type: "suite",
             id: "test-fallbacks.R",
             label: "test-fallbacks.R",
             file: path.join(testRepoTestsPath, "test-fallbacks.R"),
             children: [
-                <TestInfo> {
+                <TestInfo>{
                     type: "test",
                     id: "test-fallbacks.R&username() falls back",
                     label: "username() falls back",
                     file: path.join(testRepoTestsPath, "test-fallbacks.R"),
                     line: 3,
                 },
-                <TestInfo> {
+                <TestInfo>{
                     type: "test",
                     id: "test-fallbacks.R&fullname() falls back",
                     label: "fullname() falls back",
                     file: path.join(testRepoTestsPath, "test-fallbacks.R"),
                     line: 10,
                 },
-                <TestInfo> {
+                <TestInfo>{
                     type: "test",
                     id: "test-fallbacks.R&email_address() falls back",
                     label: "email_address() falls back",
                     file: path.join(testRepoTestsPath, "test-fallbacks.R"),
                     line: 16,
                 },
-                <TestInfo> {
+                <TestInfo>{
                     type: "test",
                     id: "test-fallbacks.R&gh_username() falls back",
                     label: "gh_username() falls back",
                     file: path.join(testRepoTestsPath, "test-fallbacks.R"),
                     line: 22,
-                }
-            ]
+                },
+            ],
         },
-        <TestSuiteInfo> { 
+        <TestSuiteInfo>{
             type: "suite",
             id: "test-email.R",
             label: "test-email.R",
             file: path.join(testRepoTestsPath, "test-email.R"),
             children: [
-                <TestInfo> {
+                <TestInfo>{
                     type: "test",
                     id: "test-email.R&Email address works",
                     label: "Email address works",
                     file: path.join(testRepoTestsPath, "test-email.R"),
                     line: 3,
                 },
-                <TestInfo> {
+                <TestInfo>{
                     type: "test",
                     id: "test-email.R&EMAIL env var",
                     label: "EMAIL env var",
                     file: path.join(testRepoTestsPath, "test-email.R"),
                     line: 9,
-                }
-            ]
+                },
+            ],
         },
     ],
-}
+};

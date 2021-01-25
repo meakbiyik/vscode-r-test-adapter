@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
+import * as fs from "fs";
 import {
     TestAdapter,
     TestLoadStartedEvent,
@@ -99,6 +100,7 @@ export abstract class RAdapter implements TestAdapter {
 
         this.log.info(`Test run finished`);
         this.isRunning = false;
+        this.cleanUpTempFiles();
     }
 
     cancel(): void {
@@ -112,6 +114,7 @@ export abstract class RAdapter implements TestAdapter {
         }
         this.childProcess = undefined;
         this.isRunning = false;
+        this.cleanUpTempFiles();
 
         this.testStatesEmitter.fire(<TestRunFinishedEvent>{ type: "finished" });
 
@@ -124,5 +127,18 @@ export abstract class RAdapter implements TestAdapter {
             disposable.dispose();
         }
         this.disposables = [];
+    }
+
+    cleanUpTempFiles(): void {
+        if (this.isRunning) return;
+        for (const file of this.tempFilePaths) {
+            if (fs.existsSync(file)) {
+                try {
+                    fs.unlinkSync(file);
+                } catch (e) {}
+            } else {
+                this.tempFilePaths.delete(file);
+            }
+        }
     }
 }
