@@ -43,7 +43,10 @@ export class TestthatAdapter extends RAdapter {
 
         let testFiles;
         try {
-            testFiles = await vscode.workspace.findFiles("**/tests/testthat/**/test*.R");
+            testFiles = await vscode.workspace.findFiles(
+                "**/tests/testthat/**/test*.R",
+                "**/check/*.Rcheck/**"
+            );
         } catch (error) {
             this.log.error(error);
             return this.testSuite;
