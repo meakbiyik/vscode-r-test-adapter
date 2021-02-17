@@ -186,7 +186,8 @@ suite("TestthatAdapter", () => {
             if (e.type == "test" && e.state == "passed") testStatesPassed = true;
         });
         (<any>testAdapter).isRunning = true;
-        expect(testAdapter.runTests(["test-fallbacks.R&username() falls back"])).to.eventually.be.fulfilled;
+        expect(testAdapter.runTests(["test-fallbacks.R&username() falls back"])).to.eventually.be
+            .fulfilled;
         await sleep(10000); // ensure events are fired
         expect(testStatesRunningFlag).to.be.true;
         expect(testStatesErroredFlag).to.be.false;
@@ -227,7 +228,8 @@ suite("TestthatAdapter", () => {
             if (e.type == "test" && e.state == "passed") testStatesPassed = true;
         });
         (<any>testAdapter).isRunning = true;
-        expect(testAdapter.runTests(["test-email.R&Email address works"])).to.eventually.be.fulfilled;
+        expect(testAdapter.runTests(["test-email.R&Email address works"])).to.eventually.be
+            .fulfilled;
         await sleep(10000); // ensure events are fired
         expect(testStatesRunningFlag).to.be.true;
         expect(testStatesErroredFlag).to.be.false;
@@ -309,21 +311,6 @@ const testRepoStructure: TestSuiteInfo = {
         },
         <TestSuiteInfo>{
             type: "suite",
-            id: "test-gh-username.R",
-            label: "test-gh-username.R",
-            file: path.join(testRepoTestsPath, "test-gh-username.R"),
-            children: [
-                <TestInfo>{
-                    type: "test",
-                    id: "test-gh-username.R&Github username works",
-                    label: "Github username works",
-                    file: path.join(testRepoTestsPath, "test-gh-username.R"),
-                    line: 3,
-                },
-            ],
-        },
-        <TestSuiteInfo>{
-            type: "suite",
             id: "test-fullname.R",
             label: "test-fullname.R",
             file: path.join(testRepoTestsPath, "test-fullname.R"),
@@ -337,17 +324,10 @@ const testRepoStructure: TestSuiteInfo = {
                 },
                 <TestInfo>{
                     type: "test",
-                    id: "test-fullname.R&fullname works",
-                    label: "fullname works",
-                    file: path.join(testRepoTestsPath, "test-fullname.R"),
-                    line: 16,
-                },
-                <TestInfo>{
-                    type: "test",
                     id: "test-fullname.R&FULLNAME env var",
                     label: "FULLNAME env var",
                     file: path.join(testRepoTestsPath, "test-fullname.R"),
-                    line: 26,
+                    line: 16,
                 },
             ],
         },

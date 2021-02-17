@@ -28,7 +28,7 @@ suite("TestthatRunner", () => {
 
         let stdout = await runner.runAllTests(testAdapter);
 
-        expect(stdout).to.contain("FAIL 1 | WARN 0 | SKIP 1 | PASS 19");
+        expect(stdout).to.contain("FAIL 1 | WARN 0 | SKIP 1 | PASS 14");
         testAdapter.dispose();
     });
 
