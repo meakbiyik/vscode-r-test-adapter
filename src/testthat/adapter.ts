@@ -166,8 +166,9 @@ export class TestthatAdapter extends RAdapter {
             TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent
         >
     ) {
-        let failedTests = this.getFailedTests(stdout);
-        let skippedTests = this.getSkippedTests(stdout);
+        let nodeid = node.type === "test" ? node.id : undefined;
+        let failedTests = this.getFailedTests(stdout, nodeid);
+        let skippedTests = this.getSkippedTests(stdout, nodeid);
         this.callRecursive(node, (node) => {
             if (node.type === "test") {
                 let state = "passed";
@@ -190,30 +191,30 @@ export class TestthatAdapter extends RAdapter {
         });
     }
 
-    getFailedTests(stdout: string, filename?: string) {
+    getFailedTests(stdout: string, nodeid?: string) {
         const failureRegex = /(failure|error) \((?<fileName>.+?):\d+:\d+\): (?<label>.+)(\r\n|\r|\n)(?<reason>[\w\W]+?)(?=(\n\s*skip|\n\s*failure|\n\s*warn|\n\s*error|[-─]{10,}))/gi;
         let failedTests = new Map<string, string>();
         let match;
         while ((match = failureRegex.exec(stdout))) {
             let testLabel = match.groups!["label"];
-            let fileName = filename ? filename : match.groups!["fileName"];
+            let fileName = match.groups!["fileName"];
             let reason = match.groups!["reason"];
-            let id = encodeNodeId(fileName, testLabel);
+            let id = nodeid ? nodeid : encodeNodeId(fileName, testLabel);
             let previousReasons = failedTests.get(id) ? failedTests.get(id) : "";
             failedTests.set(id, previousReasons + reason + "\n\n");
         }
         return failedTests;
     }
 
-    getSkippedTests(stdout: string, filename?: string) {
+    getSkippedTests(stdout: string, nodeid?: string) {
         const skipRegex = /skip \((?<fileName>.+?):\d+:\d+\): (?<label>.+)(\r\n|\r|\n)(?<reason>[\w\W]+?)(?=(\n\s*skip|\n\s*failure|\n\s*warn|\n\s*error|[-─]{10,}))/gi;
         let skippedTests = new Map<string, string>();
         let match;
         while ((match = skipRegex.exec(stdout))) {
             let testLabel = match.groups!["label"];
-            let fileName = filename ? filename : match.groups!["fileName"];
+            let fileName = match.groups!["fileName"];
             let reason = match.groups!["reason"];
-            let id = encodeNodeId(fileName, testLabel);
+            let id = nodeid ? nodeid : encodeNodeId(fileName, testLabel);
             let previousReasons = skippedTests.get(id) ? skippedTests.get(id) : "";
             skippedTests.set(id, previousReasons + reason + "\n\n");
         }

@@ -113,6 +113,129 @@ suite("TestthatAdapter", () => {
         expect(testStatesPassed).to.be.true;
         testAdapter.dispose();
     });
+
+    test("Single test run for pass", async () => {
+        // check for any temp files not yet removed from directory
+        let tempTestFiles = await vscode.workspace.findFiles("**/tests/testthat/**/test-temp*.R");
+        for (const file of tempTestFiles) {
+            try {
+                fs.unlinkSync(file.fsPath);
+            } catch (e) {}
+        }
+        let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
+        testAdapter.testSuite = testRepoStructure;
+        let testStatesRunningFlag = false;
+        let testStatesErroredFlag = false;
+        let testStatesFailedFlag = false;
+        let testStatesSkippedFlag = false;
+        let testStatesPassed = false;
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "running") testStatesRunningFlag = true;
+        });
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "errored") testStatesErroredFlag = true;
+        });
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "failed") testStatesFailedFlag = true;
+        });
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "skipped") testStatesSkippedFlag = true;
+        });
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "passed") testStatesPassed = true;
+        });
+        (<any>testAdapter).isRunning = true;
+        expect(testAdapter.runTests(["test-memoize.R&can memoize"])).to.eventually.be.fulfilled;
+        await sleep(10000); // ensure events are fired
+        expect(testStatesRunningFlag).to.be.true;
+        expect(testStatesErroredFlag).to.be.false;
+        expect(testStatesFailedFlag).to.be.false;
+        expect(testStatesSkippedFlag).to.be.false;
+        expect(testStatesPassed).to.be.true;
+        testAdapter.dispose();
+    });
+
+    test("Single test run for fail", async () => {
+        // check for any temp files not yet removed from directory
+        let tempTestFiles = await vscode.workspace.findFiles("**/tests/testthat/**/test-temp*.R");
+        for (const file of tempTestFiles) {
+            try {
+                fs.unlinkSync(file.fsPath);
+            } catch (e) {}
+        }
+        let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
+        testAdapter.testSuite = testRepoStructure;
+        let testStatesRunningFlag = false;
+        let testStatesErroredFlag = false;
+        let testStatesFailedFlag = false;
+        let testStatesSkippedFlag = false;
+        let testStatesPassed = false;
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "running") testStatesRunningFlag = true;
+        });
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "errored") testStatesErroredFlag = true;
+        });
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "failed") testStatesFailedFlag = true;
+        });
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "skipped") testStatesSkippedFlag = true;
+        });
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "passed") testStatesPassed = true;
+        });
+        (<any>testAdapter).isRunning = true;
+        expect(testAdapter.runTests(["test-fallbacks.R&username() falls back"])).to.eventually.be.fulfilled;
+        await sleep(10000); // ensure events are fired
+        expect(testStatesRunningFlag).to.be.true;
+        expect(testStatesErroredFlag).to.be.false;
+        expect(testStatesFailedFlag).to.be.true;
+        expect(testStatesSkippedFlag).to.be.false;
+        expect(testStatesPassed).to.be.false;
+        testAdapter.dispose();
+    });
+
+    test("Single test run for skip", async () => {
+        // check for any temp files not yet removed from directory
+        let tempTestFiles = await vscode.workspace.findFiles("**/tests/testthat/**/test-temp*.R");
+        for (const file of tempTestFiles) {
+            try {
+                fs.unlinkSync(file.fsPath);
+            } catch (e) {}
+        }
+        let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
+        testAdapter.testSuite = testRepoStructure;
+        let testStatesRunningFlag = false;
+        let testStatesErroredFlag = false;
+        let testStatesFailedFlag = false;
+        let testStatesSkippedFlag = false;
+        let testStatesPassed = false;
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "running") testStatesRunningFlag = true;
+        });
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "errored") testStatesErroredFlag = true;
+        });
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "failed") testStatesFailedFlag = true;
+        });
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "skipped") testStatesSkippedFlag = true;
+        });
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "passed") testStatesPassed = true;
+        });
+        (<any>testAdapter).isRunning = true;
+        expect(testAdapter.runTests(["test-email.R&Email address works"])).to.eventually.be.fulfilled;
+        await sleep(10000); // ensure events are fired
+        expect(testStatesRunningFlag).to.be.true;
+        expect(testStatesErroredFlag).to.be.false;
+        expect(testStatesFailedFlag).to.be.false;
+        expect(testStatesSkippedFlag).to.be.true;
+        expect(testStatesPassed).to.be.false;
+        testAdapter.dispose();
+    });
 });
 
 function randomChars() {
