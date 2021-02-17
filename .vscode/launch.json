@@ -6,6 +6,7 @@
       "request": "launch",
       "name": "R adapter",
       "runtimeExecutable": "${execPath}",
+      "preLaunchTask": "npm: build",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}"
       ],
@@ -18,6 +19,7 @@
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
+      "preLaunchTask": "npm: build",
       "args": [
         "${workspaceFolder}/test/testRepo",
         "--extensionDevelopmentPath=${workspaceFolder}",

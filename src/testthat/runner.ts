@@ -178,3 +178,9 @@ function randomChars() {
 
     return value.join("");
 }
+
+export const _unittestable = {
+    getRscriptCommand,
+    getRangeOfTest,
+    randomChars
+};

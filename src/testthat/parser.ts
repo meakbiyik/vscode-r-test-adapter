@@ -68,3 +68,7 @@ function execute_R_parser(uri: vscode.Uri) {
 export function encodeNodeId(fileName: string, testLabel: string) {
     return `${fileName}&${testLabel}`;
 }
+
+export const _unittestable = {
+    execute_R_parser
+};

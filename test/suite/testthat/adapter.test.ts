@@ -84,14 +84,21 @@ suite("TestthatAdapter", () => {
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
         testAdapter.testSuite = testRepoStructure;
         let testStatesRunningFlag = false;
-        let testStatesErroredFailedFlag = false;
+        let testStatesErroredFlag = false;
+        let testStatesFailedFlag = false;
+        let testStatesSkippedFlag = false;
         let testStatesPassed = false;
         testAdapter.testStatesEmitter.event((e) => {
             if (e.type == "test" && e.state == "running") testStatesRunningFlag = true;
         });
         testAdapter.testStatesEmitter.event((e) => {
-            if (e.type == "test" && ["failed", "errored"].includes(e.state))
-                testStatesErroredFailedFlag = true;
+            if (e.type == "test" && e.state == "errored") testStatesErroredFlag = true;
+        });
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "failed") testStatesFailedFlag = true;
+        });
+        testAdapter.testStatesEmitter.event((e) => {
+            if (e.type == "test" && e.state == "skipped") testStatesSkippedFlag = true;
         });
         testAdapter.testStatesEmitter.event((e) => {
             if (e.type == "test" && e.state == "passed") testStatesPassed = true;
@@ -100,7 +107,9 @@ suite("TestthatAdapter", () => {
         expect(testAdapter.runTests(["root"])).to.eventually.be.fulfilled;
         await sleep(10000); // ensure events are fired
         expect(testStatesRunningFlag).to.be.true;
-        expect(testStatesErroredFailedFlag).to.be.false;
+        expect(testStatesErroredFlag).to.be.false;
+        expect(testStatesFailedFlag).to.be.true;
+        expect(testStatesSkippedFlag).to.be.true;
         expect(testStatesPassed).to.be.true;
         testAdapter.dispose();
     });

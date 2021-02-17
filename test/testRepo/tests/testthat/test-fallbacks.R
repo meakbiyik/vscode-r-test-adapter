@@ -5,7 +5,7 @@ test_that("username() falls back", {
 
   mockery::stub(username, "Sys.getenv", NULL)
   mockery::stub(username, "system", function(...) stop())
-  expect_equal(username(fallback = "foobar"), "foobar")
+  expect_equal(username(fallback = "foobar"), "NOT a foobar --error")
 })
 
 test_that("fullname() falls back", {
