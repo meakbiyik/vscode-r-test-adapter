@@ -5,8 +5,10 @@ tsconfig.json
 .vscode/**
 .vscode-test/**
 .gitignore
+.gitattributes
 *.svg
 out/test/**
 test/**
 .prettierignore
+.prettierrc
 azure-pipelines.yml
