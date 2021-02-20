@@ -36,11 +36,52 @@ suite("TestthatParser", () => {
     });
 
     test("tree-sitter parser executes correctly", async () => {
-        let result = await parser._unittestable.execute_R_parser(
+        let matches = await parser._unittestable.findTests(
             vscode.Uri.file(path.join(testRepoTestsPath, "test-email.R"))
         );
 
-        expect(result.stdout).to.contain(`test_that(\\"EMAIL env var\\"`);
+        expect(formatMatches(matches)).to.be.deep.equalInAnyOrder([
+            {
+                pattern: 0,
+                captures: [
+                    {
+                        name: "call",
+                        text:
+                            'test_that("Email address works", {' +
+                            "\n" +
+                            '  skip("Skip for test reasons")' +
+                            "\n" +
+                            '  mockery::stub(email_address, "system", "jambajoe@joe.joe")' +
+                            "\n" +
+                            '  expect_equal(email_address(), "jambajoe@joe.joe")' +
+                            "\n" +
+                            "})",
+                    },
+                    { name: "_function.name", text: "test_that" },
+                    { name: "label", text: '"Email address works"' },
+                ],
+            },
+            {
+                pattern: 0,
+                captures: [
+                    {
+                        name: "call",
+                        text:
+                            'test_that("EMAIL env var", {' +
+                            "\n" +
+                            "  expect_equal(" +
+                            "\n" +
+                            '    withr::with_envvar(c("EMAIL" = "bugs.bunny@acme.com"), email_address()),' +
+                            "\n" +
+                            '    "bugs.bunny@acme.com")' +
+                            "\n" +
+                            "})",
+                    },
+                    { name: "_function.name", text: "test_that" },
+                    { name: "label", text: '"EMAIL env var"' },
+                ],
+            },
+        ]);
     });
 
     test("Node id's are properly encoded", async () => {
@@ -48,6 +89,22 @@ suite("TestthatParser", () => {
         expect(encoded_id).to.be.equal("test1&test2");
     });
 });
+
+function formatMatches(matches: any) {
+    return matches.map(({ pattern, captures }: any) => ({
+        pattern,
+        captures: formatCaptures(captures),
+    }));
+}
+
+function formatCaptures(captures: any) {
+    return captures.map((c: any) => {
+        const node = c.node;
+        delete c.node;
+        c.text = node.text;
+        return c;
+    });
+}
 
 const testEmailRepoStructure: TestSuiteInfo = {
     type: "suite",

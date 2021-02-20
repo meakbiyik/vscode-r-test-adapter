@@ -1,13 +1,22 @@
 import * as vscode from "vscode";
-import { TestSuiteInfo, TestInfo } from "vscode-test-adapter-api";
 import * as path from "path";
-import * as util from "util";
+import { TestSuiteInfo, TestInfo } from "vscode-test-adapter-api";
 import { exec as _exec } from "child_process";
 import { RAdapter } from "../abstractAdapter";
 
-const treeSitterRPath = path.join(__dirname, "..", "..", "..", "node_modules", "tree-sitter-r");
-const queryPath = path.join(__dirname, "..", "..", "..", "query", "detect_testthat.scm");
-const exec = util.promisify(_exec);
+const wasmPath = path.join(__dirname, "..", "..", "..", "bin", "tree-sitter-r.wasm");
+const Parser = require("web-tree-sitter");
+let R: any;
+
+async function prepareParser(): Promise<any> {
+    await Parser.init();
+    const parser = new Parser();
+    R = await Parser.Language.load(wasmPath);
+    parser.setLanguage(R);
+    return parser;
+}
+
+let parser = prepareParser();
 
 export async function parseTestsFromFile(
     adapter: RAdapter,
@@ -21,48 +30,57 @@ export async function parseTestsFromFile(
         children: [],
     };
 
-    let stdout;
+    let matches;
     try {
-        const result = await execute_R_parser(uri);
-        stdout = result.stdout;
+        matches = await findTests(uri);
     } catch (error) {
         adapter.log.error(error);
         return test_suite;
     }
 
-    let match_regex = /capture: call, row: (?<line>\d+), text: (?<code>"test_that\s*\([\\"'\s]+(?<label>.+?)[\\"'\s]+,[\w\W]+?)\s+(?=pattern)/g;
-    let match: RegExpExecArray | null;
-
-    while ((match = match_regex.exec(stdout))) {
-        let testStart = Number(match.groups!["line"]);
+    for (const match of matches) {
+        if (match === undefined) continue;
+        let callNode = match.captures[0].node;
+        let labelNode = match.captures[2].node;
+        let testStartLine = callNode.startPosition.row;
         let fileName = uri.path.split("/").pop()!;
-        let testLabel = match.groups!["label"];
+        let testLabel = labelNode.text;
+        let strippedTestLabel = testLabel.substring(1, testLabel.length - 1);
         test_suite.children.push(<TestInfo>{
             type: "test",
-            id: encodeNodeId(fileName, testLabel),
-            label: testLabel,
+            id: encodeNodeId(fileName, strippedTestLabel),
+            label: strippedTestLabel,
             file: uri.fsPath,
-            line: testStart,
+            line: testStartLine,
         });
     }
 
     return Promise.resolve(test_suite);
 }
 
-function execute_R_parser(uri: vscode.Uri) {
-    let filePath = uri.fsPath;
-    let treeSitterCmd;
-    if (process.platform == "win32") {
-        treeSitterCmd = `start /B "${path.join(
-            treeSitterRPath,
-            "..",
-            "tree-sitter-cli"
-        )}" tree-sitter`;
-    } else {
-        treeSitterCmd = path.join(treeSitterRPath, "..", "tree-sitter-cli", "tree-sitter");
-    }
-    let command = `${treeSitterCmd} query ${queryPath} ${filePath} -c`;
-    return exec(command, { cwd: treeSitterRPath });
+async function findTests(uri: vscode.Uri) {
+    const parserResolved = await parser;
+    return vscode.workspace.openTextDocument(uri).then(
+        (document: vscode.TextDocument) => {
+            const tree = parserResolved.parse(document.getText());
+            const query = R.query(
+                `
+                (call 
+                    function: (identifier) @_function.name (#eq? @_function.name "test_that")
+                    arguments: 
+                        (arguments 
+                            value: (string) @label
+                            value: (_)
+                        )
+                ) @call
+                `
+            );
+            return query.matches(tree.rootNode);
+        },
+        (reason: any) => {
+            throw reason;
+        }
+    );
 }
 
 export function encodeNodeId(fileName: string, testLabel: string) {
@@ -70,5 +88,5 @@ export function encodeNodeId(fileName: string, testLabel: string) {
 }
 
 export const _unittestable = {
-    execute_R_parser
+    findTests,
 };

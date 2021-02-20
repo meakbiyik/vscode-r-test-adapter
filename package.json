@@ -46,11 +46,10 @@
   "dependencies": {
     "lookpath": "^1.1.0",
     "tmp-promise": "^3.0.2",
-    "tree-sitter-cli": "^0.18.0",
-    "tree-sitter-r": "git+https://github.com/r-lib/tree-sitter-r.git",
     "tslib": "^1.9.3",
     "vscode-test-adapter-api": "^1.7.0",
     "vscode-test-adapter-util": "^0.7.0",
+    "web-tree-sitter": "^0.18.1",
     "winreg": "^1.2.4"
   },
   "devDependencies": {
