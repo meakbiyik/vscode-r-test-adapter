@@ -62,7 +62,7 @@ export abstract class RAdapter implements TestAdapter {
     abstract runTests(tests: string[]): Promise<void>;
 
     loadOnChange(e: vscode.Uri) {
-        if (!this.tempFilePaths.has(path.normalize(e.fsPath))) {
+        if (!this.tempFilePaths.has(path.normalize(e.fsPath)) && fs.existsSync(e.fsPath)) {
             clearTimeout(this.loadTimeout);
             this.loadTimeout = setTimeout(() => {
                 this.load();
