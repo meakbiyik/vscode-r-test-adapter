@@ -40,46 +40,38 @@ suite("TestthatParser", () => {
             vscode.Uri.file(path.join(testRepoTestsPath, "test-email.R"))
         );
 
-        expect(formatMatches(matches)).to.be.deep.equalInAnyOrder([
+        expect(matches).to.be.deep.equalInAnyOrder([
             {
-                pattern: 0,
-                captures: [
-                    {
-                        name: "call",
-                        text:
-                            'test_that("Email address works", {' +
-                            "\n" +
-                            '  skip("Skip for test reasons")' +
-                            "\n" +
-                            '  mockery::stub(email_address, "system", "jambajoe@joe.joe")' +
-                            "\n" +
-                            '  expect_equal(email_address(), "jambajoe@joe.joe")' +
-                            "\n" +
-                            "})",
-                    },
-                    { name: "_function.name", text: "test_that" },
-                    { name: "label", text: '"Email address works"' },
-                ],
+                testLabel: "Email address works",
+                testStartLine: 3,
+                testStartIndex: 27,
+                testEndIndex: 209,
             },
             {
-                pattern: 0,
-                captures: [
-                    {
-                        name: "call",
-                        text:
-                            'test_that("EMAIL env var", {' +
-                            "\n" +
-                            "  expect_equal(" +
-                            "\n" +
-                            '    withr::with_envvar(c("EMAIL" = "bugs.bunny@acme.com"), email_address()),' +
-                            "\n" +
-                            '    "bugs.bunny@acme.com")' +
-                            "\n" +
-                            "})",
-                    },
-                    { name: "_function.name", text: "test_that" },
-                    { name: "label", text: '"EMAIL env var"' },
-                ],
+                testLabel: "EMAIL env var",
+                testStartLine: 9,
+                testStartIndex: 211,
+                testEndIndex: 362,
+            },
+            {
+                testSuperLabel: "Email address",
+                testSuperStartLine: 15,
+                testSuperStartIndex: 364,
+                testSuperEndIndex: 736,
+                testLabel: "works",
+                testStartLine: 16,
+                testStartIndex: 404,
+                testEndIndex: 573,
+            },
+            {
+                testSuperLabel: "Email address",
+                testSuperStartLine: 15,
+                testSuperStartIndex: 364,
+                testSuperEndIndex: 736,
+                testLabel: "got EMAIL env var",
+                testStartLine: 22,
+                testStartIndex: 577,
+                testEndIndex: 733,
             },
         ]);
     });
@@ -89,22 +81,6 @@ suite("TestthatParser", () => {
         expect(encoded_id).to.be.equal("test1&test2");
     });
 });
-
-function formatMatches(matches: any) {
-    return matches.map(({ pattern, captures }: any) => ({
-        pattern,
-        captures: formatCaptures(captures),
-    }));
-}
-
-function formatCaptures(captures: any) {
-    return captures.map((c: any) => {
-        const node = c.node;
-        delete c.node;
-        c.text = node.text;
-        return c;
-    });
-}
 
 const testEmailRepoStructure: TestSuiteInfo = {
     type: "suite",
@@ -125,6 +101,29 @@ const testEmailRepoStructure: TestSuiteInfo = {
             label: "EMAIL env var",
             file: path.join(testRepoTestsPath, "test-email.R"),
             line: 9,
+        },
+        <TestSuiteInfo>{
+            type: "suite",
+            id: "test-email.R&Email address",
+            label: "Email address",
+            file: path.join(testRepoTestsPath, "test-email.R"),
+            line: 15,
+            children: [
+                <TestInfo>{
+                    type: "test",
+                    id: "test-email.R&Email address: works",
+                    label: "works",
+                    file: path.join(testRepoTestsPath, "test-email.R"),
+                    line: 16,
+                },
+                <TestInfo>{
+                    type: "test",
+                    id: "test-email.R&Email address: got EMAIL env var",
+                    label: "got EMAIL env var",
+                    file: path.join(testRepoTestsPath, "test-email.R"),
+                    line: 22,
+                },
+            ],
         },
     ],
 };

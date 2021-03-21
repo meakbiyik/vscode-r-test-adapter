@@ -11,7 +11,7 @@ import { Log } from "vscode-test-adapter-util";
 import * as path from "path";
 import { RAdapter } from "../abstractAdapter";
 import { parseTestsFromFile, encodeNodeId } from "./parser";
-import { runAllTests, runSingleTestFile, runSingleTest } from "./runner";
+import { runAllTests, runSingleTestFile, runSingleTest, runDescribeTestSuite } from "./runner";
 
 export class TestthatAdapter extends RAdapter {
     testSuite!: TestSuiteInfo;
@@ -115,8 +115,10 @@ export class TestthatAdapter extends RAdapter {
         try {
             if (node.type === "suite" && node.id === "root") {
                 stdout = await runAllTests(this);
-            } else if (node.type === "suite") {
+            } else if (node.type === "suite" && node.line === undefined) {
                 stdout = await runSingleTestFile(this, node.file!);
+            } else if (node.type === "suite") {
+                stdout = await runDescribeTestSuite(this, node);
             } else {
                 stdout = await runSingleTest(this, node);
             }
@@ -134,7 +136,7 @@ export class TestthatAdapter extends RAdapter {
             });
         }
 
-        if (stdout != undefined) {
+        if (stdout !== undefined) {
             this.emitTestResults(stdout, node, testStatesEmitter);
         }
 
@@ -166,9 +168,9 @@ export class TestthatAdapter extends RAdapter {
             TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent
         >
     ) {
-        let nodeid = node.type === "test" ? node.id : undefined;
-        let failedTests = this.getFailedTests(stdout, nodeid);
-        let skippedTests = this.getSkippedTests(stdout, nodeid);
+        let fileName = node.file ? path.basename(node.file) : undefined;
+        let failedTests = this.getFailedTests(stdout, fileName);
+        let skippedTests = this.getSkippedTests(stdout, fileName);
         this.callRecursive(node, (node) => {
             if (node.type === "test") {
                 let state = "passed";
@@ -191,7 +193,7 @@ export class TestthatAdapter extends RAdapter {
         });
     }
 
-    getFailedTests(stdout: string, nodeid?: string) {
+    getFailedTests(stdout: string, testFileName?: string) {
         const failureRegex = /(failure|error) \((?<fileName>.+?):\d+:\d+\): (?<label>.+)(\r\n|\r|\n)(?<reason>[\w\W]+?)(?=(\n\s*skip|\n\s*failure|\n\s*warn|\n\s*error|[-─]{10,}))/gi;
         let failedTests = new Map<string, string>();
         let match;
@@ -199,14 +201,16 @@ export class TestthatAdapter extends RAdapter {
             let testLabel = match.groups!["label"];
             let fileName = match.groups!["fileName"];
             let reason = match.groups!["reason"];
-            let id = nodeid ? nodeid : encodeNodeId(fileName, testLabel);
+            let id = testFileName
+                ? encodeNodeId(testFileName, testLabel)
+                : encodeNodeId(fileName, testLabel);
             let previousReasons = failedTests.get(id) ? failedTests.get(id) : "";
             failedTests.set(id, previousReasons + reason + "\n\n");
         }
         return failedTests;
     }
 
-    getSkippedTests(stdout: string, nodeid?: string) {
+    getSkippedTests(stdout: string, testFileName?: string) {
         const skipRegex = /skip \((?<fileName>.+?):\d+:\d+\): (?<label>.+)(\r\n|\r|\n)(?<reason>[\w\W]+?)(?=(\n\s*skip|\n\s*failure|\n\s*warn|\n\s*error|[-─]{10,}))/gi;
         let skippedTests = new Map<string, string>();
         let match;
@@ -214,7 +218,9 @@ export class TestthatAdapter extends RAdapter {
             let testLabel = match.groups!["label"];
             let fileName = match.groups!["fileName"];
             let reason = match.groups!["reason"];
-            let id = nodeid ? nodeid : encodeNodeId(fileName, testLabel);
+            let id = testFileName
+                ? encodeNodeId(testFileName, testLabel)
+                : encodeNodeId(fileName, testLabel);
             let previousReasons = skippedTests.get(id) ? skippedTests.get(id) : "";
             skippedTests.set(id, previousReasons + reason + "\n\n");
         }

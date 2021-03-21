@@ -7,8 +7,8 @@ import * as tmp from "tmp-promise";
 import { exec } from "child_process";
 import * as vscode from "vscode";
 import * as crypto from "crypto";
-import { TestInfo } from "vscode-test-adapter-api";
-import { parseTestsFromFile } from "./parser";
+import { TestInfo, TestSuiteInfo } from "vscode-test-adapter-api";
+import { findTests } from "./parser";
 import { appendFile as _appendFile } from "fs";
 import { TestthatAdapter } from "./adapter";
 import { lookpath } from "lookpath";
@@ -56,19 +56,64 @@ export async function runSingleTestFile(
     });
 }
 
+export async function runDescribeTestSuite(adapter: TestthatAdapter, suite: TestSuiteInfo) {
+    let documentUri = Uri.file(suite.file!);
+    let document = await workspace.openTextDocument(documentUri);
+    let source = document.getText();
+    let allTests = await findTests(documentUri);
+
+    for (const parsedTest of allTests) {
+        const { testSuperLabel, testStartIndex, testEndIndex, testSuperEndIndex } = parsedTest;
+        if (testEndIndex >= source.length) break;
+        if (testSuperLabel != suite.label) {
+            source =
+                source.slice(0, testStartIndex) +
+                " ".repeat(testEndIndex - testStartIndex) +
+                source.slice(testEndIndex!);
+        } else {
+            source = source.slice(0, testSuperEndIndex!);
+            break;
+        }
+    }
+
+    let randomFileInfix = randomChars();
+    let tmpFileName = `test-${randomFileInfix}.R`;
+    let tmpFilePath = path.normalize(path.join(path.dirname(suite.file!), tmpFileName));
+    adapter.tempFilePaths.add(tmpFilePath); // Do not clean up tempFilePaths, not possible to get around the race condition
+    // cleanup is not guaranteed to unlink the file immediately
+    let tmpFileResult = await tmp.file({
+        name: tmpFileName,
+        tmpdir: path.dirname(suite.file!),
+    });
+    await appendFile(tmpFilePath, source);
+    return runSingleTestFile(adapter, tmpFilePath)
+        .catch(async (err) => {
+            await tmpFileResult.cleanup();
+            throw err;
+        })
+        .then(async (value) => {
+            await tmpFileResult.cleanup();
+            return value;
+        });
+}
+
 export async function runSingleTest(adapter: TestthatAdapter, test: TestInfo) {
     let documentUri = Uri.file(test.file!);
     let document = await workspace.openTextDocument(documentUri);
     let source = document.getText();
-    let allTests = (await parseTestsFromFile(adapter, documentUri)).children;
+    let allTests = await findTests(documentUri);
 
     for (const parsedTest of allTests) {
-        const { startIndex, endIndex } = getRangeOfTest(parsedTest.label, source);
-        if (parsedTest.label != test.label) {
-            source = source.slice(0, startIndex) + source.slice(endIndex! + 1);
+        const { testStartIndex, testEndIndex, testSuperEndIndex, testLabel } = parsedTest;
+        if (testEndIndex >= source.length) break;
+        if (testLabel != test.label) {
+            source =
+                source.slice(0, testStartIndex) +
+                " ".repeat(testEndIndex - testStartIndex) +
+                source.slice(testEndIndex!);
         } else {
-            source = source.slice(0, endIndex! + 1);
-            break;
+            let lastIndex = testSuperEndIndex ? testSuperEndIndex : testEndIndex;
+            source = source.slice(0, lastIndex);
         }
     }
 
@@ -96,7 +141,7 @@ export async function runSingleTest(adapter: TestthatAdapter, test: TestInfo) {
 async function getRscriptCommand(adapter: TestthatAdapter) {
     let config = vscode.workspace.getConfiguration("RTestAdapter");
     let configPath: string | undefined = config.get("RscriptPath");
-    if (configPath != undefined) {
+    if (configPath !== undefined && configPath !== null) {
         if ((<string>configPath).length > 0 && fs.existsSync(configPath))
             return Promise.resolve(`"${configPath}"`);
         else {
@@ -105,9 +150,9 @@ async function getRscriptCommand(adapter: TestthatAdapter) {
             );
         }
     }
-    if (RscriptPath != undefined) return Promise.resolve(`"${RscriptPath}"`);
+    if (RscriptPath !== undefined) return Promise.resolve(`"${RscriptPath}"`);
     RscriptPath = await lookpath("Rscript");
-    if (RscriptPath != undefined) return Promise.resolve(`"${RscriptPath}"`);
+    if (RscriptPath !== undefined) return Promise.resolve(`"${RscriptPath}"`);
     if (process.platform != "win32") {
         let candidates = ["/usr/bin", "/usr/local/bin"];
         for (const candidate of candidates) {
@@ -141,23 +186,6 @@ async function getRscriptCommand(adapter: TestthatAdapter) {
     throw Error("Rscript could not be found in PATH, cannot run the tests.");
 }
 
-function getRangeOfTest(label: string, source: string) {
-    let escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    let startIndex = RegExp(`test_that\\s*\\([\\"'\\s]+` + escapedLabel).exec(source)!.index;
-    let endIndex;
-    let paranthesis = 0;
-    for (let index = startIndex; index < source.length; index++) {
-        const char = source[index];
-        if (char == ")" && paranthesis == 1) {
-            endIndex = index;
-            break;
-        }
-        if (char == "(") paranthesis += 1;
-        if (char == ")") paranthesis -= 1;
-    }
-    return { startIndex, endIndex };
-}
-
 function randomChars() {
     const RANDOM_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     const count = 12;
@@ -181,6 +209,5 @@ function randomChars() {
 
 export const _unittestable = {
     getRscriptCommand,
-    getRangeOfTest,
-    randomChars
+    randomChars,
 };

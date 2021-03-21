@@ -28,7 +28,7 @@ suite("TestthatRunner", () => {
 
         let stdout = await runner.runAllTests(testAdapter);
 
-        expect(stdout).to.contain("FAIL 1 | WARN 0 | SKIP 1 | PASS 14");
+        expect(stdout).to.contain("FAIL 1 | WARN 0 | SKIP 2 | PASS 15");
         testAdapter.dispose();
     });
 
@@ -64,7 +64,7 @@ suite("TestthatRunner", () => {
             path.join(testRepoTestsPath, "test-email.R")
         );
 
-        expect(stdout).to.contain("FAIL 0 | WARN 0 | SKIP 1 | PASS 1");
+        expect(stdout).to.contain("FAIL 0 | WARN 0 | SKIP 2 | PASS 2");
         testAdapter.dispose();
     });
 
@@ -117,28 +117,5 @@ suite("TestthatRunner", () => {
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
         expect(runner._unittestable.getRscriptCommand(testAdapter)).to.eventually.be.fulfilled;
         testAdapter.dispose();
-    });
-
-    test("Ranges of a test is determined", async () => {
-        expect(
-            runner._unittestable.getRangeOfTest(
-                "Email address works",
-                `context("Email address")
-                test_that("Email address works", {
-                skip("Skip for test reasons")
-                mockery::stub(email_address, "system", "jambajoe@joe.joe")
-                expect_equal(email_address(), "jambajoe@joe.joe")
-                })
-
-                test_that("EMAIL env var", {
-                expect_equal(
-                    withr::with_envvar(c("EMAIL" = "bugs.bunny@acme.com"), email_address()),
-                    "bugs.bunny@acme.com")
-                })`
-            )
-        ).to.be.deep.equal({
-            startIndex: 41,
-            endIndex: 280,
-        });
     });
 });

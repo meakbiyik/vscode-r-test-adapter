@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased] - XX.XX.XXXX
+### Added
+- Support for BDD testing functionality of testthat (i.e. `describe`-`it`)
+
 ### Changed
 - Remove temporary file path clean-ups as it is not possible to workaround the race condition
 

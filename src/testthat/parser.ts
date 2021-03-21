@@ -38,27 +38,57 @@ export async function parseTestsFromFile(
         return test_suite;
     }
 
+    let subsuites = new Map();
     for (const match of matches) {
         if (match === undefined) continue;
-        let callNode = match.captures[0].node;
-        let labelNode = match.captures[2].node;
-        let testStartLine = callNode.startPosition.row;
+        let testStartLine = match.testStartLine;
         let fileName = uri.path.split("/").pop()!;
-        let testLabel = labelNode.text;
-        let strippedTestLabel = testLabel.substring(1, testLabel.length - 1);
-        test_suite.children.push(<TestInfo>{
-            type: "test",
-            id: encodeNodeId(fileName, strippedTestLabel),
-            label: strippedTestLabel,
-            file: uri.fsPath,
-            line: testStartLine,
-        });
+        let testLabel = match.testLabel;
+        if (match.testSuperLabel === undefined) {
+            test_suite.children.push(<TestInfo>{
+                type: "test",
+                id: encodeNodeId(fileName, testLabel),
+                label: testLabel,
+                file: uri.fsPath,
+                line: testStartLine,
+            });
+        } else {
+            if (subsuites.has(match.testSuperLabel)) {
+                subsuites.get(match.testSuperLabel).children.push(<TestInfo>{
+                    type: "test",
+                    id: encodeNodeId(fileName, testLabel, match.testSuperLabel),
+                    label: testLabel,
+                    file: uri.fsPath,
+                    line: testStartLine,
+                });
+            } else {
+                let new_subsuite = <TestSuiteInfo>{
+                    type: "suite",
+                    id: encodeNodeId(fileName, match.testSuperLabel),
+                    label: match.testSuperLabel,
+                    file: uri.fsPath,
+                    line: match.testSuperStartLine,
+                    children: [
+                        <TestInfo>{
+                            type: "test",
+                            id: encodeNodeId(fileName, testLabel, match.testSuperLabel),
+                            label: testLabel,
+                            file: uri.fsPath,
+                            line: testStartLine,
+                        },
+                    ],
+                };
+                subsuites.set(match.testSuperLabel, new_subsuite);
+            }
+        }
     }
+
+    test_suite.children.push(...subsuites.values());
 
     return Promise.resolve(test_suite);
 }
 
-async function findTests(uri: vscode.Uri) {
+export async function findTests(uri: vscode.Uri) {
     const parserResolved = await parser;
     return vscode.workspace.openTextDocument(uri).then(
         (document: vscode.TextDocument) => {
@@ -73,9 +103,73 @@ async function findTests(uri: vscode.Uri) {
                             value: (_)
                         )
                 ) @call
+                
+                (call 
+                    function: [
+                        (identifier) @_superfunction.name 
+                        (namespace_get 
+                            function: (identifier) @_superfunction.name 
+                        ) 
+                    ] (#eq? @_superfunction.name "describe")
+                    arguments: 
+                        (arguments 
+                            value: (string) @superlabel
+                            value: (_
+                                (call
+                                    function: [
+                                        (identifier) @_function.name 
+                                        (namespace_get 
+                                            function: (identifier) @_function.name 
+                                        ) 
+                                    ] (#eq? @_function.name "it")
+                                    arguments: 
+                                        (arguments 
+                                            value: (string) @label
+                                            value: (_)
+                                        )
+                                ) @call 
+                            )
+                        )
+                ) @supercall
                 `
             );
-            return query.matches(tree.rootNode);
+            const raw_matches = query.matches(tree.rootNode);
+
+            let matches = [];
+
+            for (const match of raw_matches) {
+                if (match === undefined) continue;
+                if (match.pattern == 0) {
+                    matches.push({
+                        testLabel: match.captures[2].node.text.substring(
+                            1,
+                            match.captures[2].node.text.length - 1
+                        ),
+                        testStartLine: match.captures[0].node.startPosition.row,
+                        testStartIndex: match.captures[0].node.startIndex,
+                        testEndIndex: match.captures[0].node.endIndex,
+                    });
+                } else {
+                    matches.push({
+                        testSuperLabel: match.captures[2].node.text.substring(
+                            1,
+                            match.captures[2].node.text.length - 1
+                        ),
+                        testSuperStartLine: match.captures[0].node.startPosition.row,
+                        testSuperStartIndex: match.captures[0].node.startIndex,
+                        testSuperEndIndex: match.captures[0].node.endIndex,
+                        testLabel: match.captures[5].node.text.substring(
+                            1,
+                            match.captures[5].node.text.length - 1
+                        ),
+                        testStartLine: match.captures[3].node.startPosition.row,
+                        testStartIndex: match.captures[3].node.startIndex,
+                        testEndIndex: match.captures[3].node.endIndex,
+                    });
+                }
+            }
+
+            return matches;
         },
         (reason: any) => {
             throw reason;
@@ -83,8 +177,14 @@ async function findTests(uri: vscode.Uri) {
     );
 }
 
-export function encodeNodeId(fileName: string, testLabel: string) {
-    return `${fileName}&${testLabel}`;
+export function encodeNodeId(
+    fileName: string,
+    testLabel: string,
+    testSuperLabel: string | undefined = undefined
+) {
+    return testSuperLabel
+        ? `${fileName}&${testSuperLabel}: ${testLabel}`
+        : `${fileName}&${testLabel}`;
 }
 
 export const _unittestable = {
