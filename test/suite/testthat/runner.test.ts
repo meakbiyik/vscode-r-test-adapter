@@ -23,15 +23,6 @@ suite("TestthatRunner", () => {
     };
     const log = new Log("RExplorer", workspaceFolder, "R Explorer Log");
 
-    test("All tests (root suite) run", async () => {
-        let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
-
-        let stdout = await runner.runAllTests(testAdapter);
-
-        expect(stdout).to.contain("FAIL 1 | WARN 0 | SKIP 2 | PASS 15");
-        testAdapter.dispose();
-    });
-
     test("Single test file run for pass", async () => {
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
 

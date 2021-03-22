@@ -105,7 +105,7 @@ suite("TestthatAdapter", () => {
         });
         (<any>testAdapter).isRunning = true;
         expect(testAdapter.runTests(["root"])).to.eventually.be.fulfilled;
-        await sleep(10000); // ensure events are fired
+        await sleep(20000); // ensure events are fired
         expect(testStatesRunningFlag).to.be.true;
         expect(testStatesErroredFlag).to.be.false;
         expect(testStatesFailedFlag).to.be.true;
@@ -267,146 +267,153 @@ const testRepoStructure: TestSuiteInfo = {
     children: [
         <TestSuiteInfo>{
             type: "suite",
-            id: "test-username.R",
-            label: "test-username.R",
-            file: path.join(testRepoTestsPath, "test-username.R"),
+            id: "package-testRepo",
+            label: "testRepo",
             children: [
-                <TestInfo>{
-                    type: "test",
-                    id: "test-username.R&username works",
-                    label: "username works",
-                    file: path.join(testRepoTestsPath, "test-username.R"),
-                    line: 3,
-                },
-                <TestInfo>{
-                    type: "test",
-                    id: "test-username.R&username fallback works",
-                    label: "username fallback works",
-                    file: path.join(testRepoTestsPath, "test-username.R"),
-                    line: 13,
-                },
-            ],
-        },
-        <TestSuiteInfo>{
-            type: "suite",
-            id: "test-memoize.R",
-            label: "test-memoize.R",
-            file: path.join(testRepoTestsPath, "test-memoize.R"),
-            children: [
-                <TestInfo>{
-                    type: "test",
-                    id: "test-memoize.R&can memoize",
-                    label: "can memoize",
-                    file: path.join(testRepoTestsPath, "test-memoize.R"),
-                    line: 3,
-                },
-                <TestInfo>{
-                    type: "test",
-                    id: "test-memoize.R&non-string argument",
-                    label: "non-string argument",
-                    file: path.join(testRepoTestsPath, "test-memoize.R"),
-                    line: 18,
-                },
-            ],
-        },
-        <TestSuiteInfo>{
-            type: "suite",
-            id: "test-fullname.R",
-            label: "test-fullname.R",
-            file: path.join(testRepoTestsPath, "test-fullname.R"),
-            children: [
-                <TestInfo>{
-                    type: "test",
-                    id: "test-fullname.R&fullname fallback",
-                    label: "fullname fallback",
-                    file: path.join(testRepoTestsPath, "test-fullname.R"),
-                    line: 3,
-                },
-                <TestInfo>{
-                    type: "test",
-                    id: "test-fullname.R&FULLNAME env var",
-                    label: "FULLNAME env var",
-                    file: path.join(testRepoTestsPath, "test-fullname.R"),
-                    line: 16,
-                },
-            ],
-        },
-        <TestSuiteInfo>{
-            type: "suite",
-            id: "test-fallbacks.R",
-            label: "test-fallbacks.R",
-            file: path.join(testRepoTestsPath, "test-fallbacks.R"),
-            children: [
-                <TestInfo>{
-                    type: "test",
-                    id: "test-fallbacks.R&username() falls back",
-                    label: "username() falls back",
-                    file: path.join(testRepoTestsPath, "test-fallbacks.R"),
-                    line: 3,
-                },
-                <TestInfo>{
-                    type: "test",
-                    id: "test-fallbacks.R&fullname() falls back",
-                    label: "fullname() falls back",
-                    file: path.join(testRepoTestsPath, "test-fallbacks.R"),
-                    line: 10,
-                },
-                <TestInfo>{
-                    type: "test",
-                    id: "test-fallbacks.R&email_address() falls back",
-                    label: "email_address() falls back",
-                    file: path.join(testRepoTestsPath, "test-fallbacks.R"),
-                    line: 16,
-                },
-                <TestInfo>{
-                    type: "test",
-                    id: "test-fallbacks.R&gh_username() falls back",
-                    label: "gh_username() falls back",
-                    file: path.join(testRepoTestsPath, "test-fallbacks.R"),
-                    line: 22,
-                },
-            ],
-        },
-        <TestSuiteInfo>{
-            type: "suite",
-            id: "test-email.R",
-            label: "test-email.R",
-            file: path.join(testRepoTestsPath, "test-email.R"),
-            children: [
-                <TestInfo>{
-                    type: "test",
-                    id: "test-email.R&Email address works",
-                    label: "Email address works",
-                    file: path.join(testRepoTestsPath, "test-email.R"),
-                    line: 3,
-                },
-                <TestInfo>{
-                    type: "test",
-                    id: "test-email.R&EMAIL env var",
-                    label: "EMAIL env var",
-                    file: path.join(testRepoTestsPath, "test-email.R"),
-                    line: 9,
-                },
                 <TestSuiteInfo>{
                     type: "suite",
-                    id: "test-email.R&Email address",
-                    label: "Email address",
-                    file: path.join(testRepoTestsPath, "test-email.R"),
-                    line: 15,
+                    id: "test-username.R",
+                    label: "test-username.R",
+                    file: path.join(testRepoTestsPath, "test-username.R"),
                     children: [
                         <TestInfo>{
                             type: "test",
-                            id: "test-email.R&Email address: works",
-                            label: "works",
-                            file: path.join(testRepoTestsPath, "test-email.R"),
+                            id: "test-username.R&username works",
+                            label: "username works",
+                            file: path.join(testRepoTestsPath, "test-username.R"),
+                            line: 3,
+                        },
+                        <TestInfo>{
+                            type: "test",
+                            id: "test-username.R&username fallback works",
+                            label: "username fallback works",
+                            file: path.join(testRepoTestsPath, "test-username.R"),
+                            line: 13,
+                        },
+                    ],
+                },
+                <TestSuiteInfo>{
+                    type: "suite",
+                    id: "test-memoize.R",
+                    label: "test-memoize.R",
+                    file: path.join(testRepoTestsPath, "test-memoize.R"),
+                    children: [
+                        <TestInfo>{
+                            type: "test",
+                            id: "test-memoize.R&can memoize",
+                            label: "can memoize",
+                            file: path.join(testRepoTestsPath, "test-memoize.R"),
+                            line: 3,
+                        },
+                        <TestInfo>{
+                            type: "test",
+                            id: "test-memoize.R&non-string argument",
+                            label: "non-string argument",
+                            file: path.join(testRepoTestsPath, "test-memoize.R"),
+                            line: 18,
+                        },
+                    ],
+                },
+                <TestSuiteInfo>{
+                    type: "suite",
+                    id: "test-fullname.R",
+                    label: "test-fullname.R",
+                    file: path.join(testRepoTestsPath, "test-fullname.R"),
+                    children: [
+                        <TestInfo>{
+                            type: "test",
+                            id: "test-fullname.R&fullname fallback",
+                            label: "fullname fallback",
+                            file: path.join(testRepoTestsPath, "test-fullname.R"),
+                            line: 3,
+                        },
+                        <TestInfo>{
+                            type: "test",
+                            id: "test-fullname.R&FULLNAME env var",
+                            label: "FULLNAME env var",
+                            file: path.join(testRepoTestsPath, "test-fullname.R"),
+                            line: 16,
+                        },
+                    ],
+                },
+                <TestSuiteInfo>{
+                    type: "suite",
+                    id: "test-fallbacks.R",
+                    label: "test-fallbacks.R",
+                    file: path.join(testRepoTestsPath, "test-fallbacks.R"),
+                    children: [
+                        <TestInfo>{
+                            type: "test",
+                            id: "test-fallbacks.R&username() falls back",
+                            label: "username() falls back",
+                            file: path.join(testRepoTestsPath, "test-fallbacks.R"),
+                            line: 3,
+                        },
+                        <TestInfo>{
+                            type: "test",
+                            id: "test-fallbacks.R&fullname() falls back",
+                            label: "fullname() falls back",
+                            file: path.join(testRepoTestsPath, "test-fallbacks.R"),
+                            line: 10,
+                        },
+                        <TestInfo>{
+                            type: "test",
+                            id: "test-fallbacks.R&email_address() falls back",
+                            label: "email_address() falls back",
+                            file: path.join(testRepoTestsPath, "test-fallbacks.R"),
                             line: 16,
                         },
                         <TestInfo>{
                             type: "test",
-                            id: "test-email.R&Email address: got EMAIL env var",
-                            label: "got EMAIL env var",
-                            file: path.join(testRepoTestsPath, "test-email.R"),
+                            id: "test-fallbacks.R&gh_username() falls back",
+                            label: "gh_username() falls back",
+                            file: path.join(testRepoTestsPath, "test-fallbacks.R"),
                             line: 22,
+                        },
+                    ],
+                },
+                <TestSuiteInfo>{
+                    type: "suite",
+                    id: "test-email.R",
+                    label: "test-email.R",
+                    file: path.join(testRepoTestsPath, "test-email.R"),
+                    children: [
+                        <TestInfo>{
+                            type: "test",
+                            id: "test-email.R&Email address works",
+                            label: "Email address works",
+                            file: path.join(testRepoTestsPath, "test-email.R"),
+                            line: 3,
+                        },
+                        <TestInfo>{
+                            type: "test",
+                            id: "test-email.R&EMAIL env var",
+                            label: "EMAIL env var",
+                            file: path.join(testRepoTestsPath, "test-email.R"),
+                            line: 9,
+                        },
+                        <TestSuiteInfo>{
+                            type: "suite",
+                            id: "test-email.R&Email address",
+                            label: "Email address",
+                            file: path.join(testRepoTestsPath, "test-email.R"),
+                            line: 15,
+                            children: [
+                                <TestInfo>{
+                                    type: "test",
+                                    id: "test-email.R&Email address: works",
+                                    label: "works",
+                                    file: path.join(testRepoTestsPath, "test-email.R"),
+                                    line: 16,
+                                },
+                                <TestInfo>{
+                                    type: "test",
+                                    id: "test-email.R&Email address: got EMAIL env var",
+                                    label: "got EMAIL env var",
+                                    file: path.join(testRepoTestsPath, "test-email.R"),
+                                    line: 22,
+                                },
+                            ],
                         },
                     ],
                 },

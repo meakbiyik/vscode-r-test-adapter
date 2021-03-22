@@ -8,9 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - XX.XX.XXXX
 ### Added
 - Support for BDD testing functionality of testthat (i.e. `describe`-`it`)
+- Multiple package support in a workspace
 
 ### Changed
 - Remove temporary file path clean-ups as it is not possible to workaround the race condition
+- Test files are run one by one to provide immediate test state results in file level
 
 ## [0.3.0] - 20.02.2021
 ### Changed

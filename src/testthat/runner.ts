@@ -16,36 +16,18 @@ import { lookpath } from "lookpath";
 const appendFile = util.promisify(_appendFile);
 let RscriptPath: string | undefined;
 
-export async function runAllTests(adapter: TestthatAdapter): Promise<string> {
-    let devtoolsCall = `options("testthat.use_colours"=F);devtools::test('.')`;
-    let RscriptCommand = await getRscriptCommand(adapter);
-    let command = `${RscriptCommand} -e "${devtoolsCall}"`;
-    let cwd = vscode.workspace.workspaceFolders![0].uri.fsPath;
-    return new Promise(async (resolve, reject) => {
-        let childProcess = exec(
-            command,
-            { cwd, env: process.env },
-            (err, stdout: string, stderr: string) => {
-                adapter.childProcess = undefined;
-                if (err) reject(stderr);
-                resolve(stdout);
-            }
-        );
-        adapter.childProcess = childProcess;
-    });
-}
-
 export async function runSingleTestFile(
     adapter: TestthatAdapter,
     filePath: string
 ): Promise<string> {
-    let devtoolsCall = `options("testthat.use_colours"=F);devtools::test_file('${filePath.replace(
-        /\\/g,
-        "/"
-    )}')`;
+    let cleanFilePath = filePath.replace(/\\/g, "/");
+    let projectDirMatch = cleanFilePath.match(/(.+?)\/tests\/testthat.+?/i);
+    let devtoolsCall = `options("testthat.use_colours"=F);devtools::test_file('${cleanFilePath}')`;
     let RscriptCommand = await getRscriptCommand(adapter);
     let command = `${RscriptCommand} -e "${devtoolsCall}"`;
-    let cwd = vscode.workspace.workspaceFolders![0].uri.fsPath;
+    let cwd = projectDirMatch
+        ? projectDirMatch[1]
+        : vscode.workspace.workspaceFolders![0].uri.fsPath;
     return new Promise(async (resolve, reject) => {
         let childProcess = exec(command, { cwd }, (err, stdout: string, stderr: string) => {
             adapter.childProcess = undefined;

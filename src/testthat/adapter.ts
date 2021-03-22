@@ -11,7 +11,7 @@ import { Log } from "vscode-test-adapter-util";
 import * as path from "path";
 import { RAdapter } from "../abstractAdapter";
 import { parseTestsFromFile, encodeNodeId } from "./parser";
-import { runAllTests, runSingleTestFile, runSingleTest, runDescribeTestSuite } from "./runner";
+import { runSingleTestFile, runSingleTest, runDescribeTestSuite } from "./runner";
 
 export class TestthatAdapter extends RAdapter {
     testSuite!: TestSuiteInfo;
@@ -55,8 +55,27 @@ export class TestthatAdapter extends RAdapter {
         for (const testFile of testFiles) {
             if (this.tempFilePaths.has(path.normalize(testFile.fsPath))) continue;
             try {
-                let tests_in_file = await parseTestsFromFile(this, testFile);
-                this.testSuite.children.push(tests_in_file);
+                let testsInFile = await parseTestsFromFile(this, testFile);
+                let packageName = testsInFile
+                    .file!.replace(/\\/g, "/")
+                    .match(/.+?\/([^/]+?)\/tests\/testthat.+?/i);
+                if (packageName !== null) {
+                    let packageNode = <TestSuiteInfo>(
+                        this.findNode(this.testSuite, `package-${packageName[1]}`)
+                    );
+                    if (packageNode === undefined) {
+                        packageNode = <TestSuiteInfo>{
+                            type: "suite",
+                            id: `package-${packageName[1]}`,
+                            label: packageName[1],
+                            children: [],
+                        };
+                        this.testSuite.children.push(packageNode);
+                    }
+                    packageNode.children.push(testsInFile);
+                } else {
+                    this.testSuite.children.push(testsInFile);
+                }
             } catch (error) {
                 this.log.error(error);
             }
@@ -96,25 +115,35 @@ export class TestthatAdapter extends RAdapter {
 
         let stdout: string | undefined;
 
-        this.callRecursive(node, (node) => {
-            if (node.type === "suite") {
-                testStatesEmitter.fire(<TestSuiteEvent>{
-                    type: "suite",
-                    suite: node.id,
-                    state: "running",
-                });
-            } else {
-                testStatesEmitter.fire(<TestEvent>{
-                    type: "test",
-                    test: node.id,
-                    state: "running",
-                });
-            }
-        });
+        if (node.type === "suite" && node.file === undefined) {
+            testStatesEmitter.fire(<TestSuiteEvent>{
+                type: "suite",
+                suite: node.id,
+                state: "running",
+            });
+        } else {
+            this.callRecursive(node, (node) => {
+                if (node.type === "suite") {
+                    testStatesEmitter.fire(<TestSuiteEvent>{
+                        type: "suite",
+                        suite: node.id,
+                        state: "running",
+                    });
+                } else {
+                    testStatesEmitter.fire(<TestEvent>{
+                        type: "test",
+                        test: node.id,
+                        state: "running",
+                    });
+                }
+            });
+        }
 
         try {
-            if (node.type === "suite" && node.id === "root") {
-                stdout = await runAllTests(this);
+            if (node.type === "suite" && node.file === undefined) {
+                for (const child of node.children) {
+                    await this.runNode(child);
+                }
             } else if (node.type === "suite" && node.line === undefined) {
                 stdout = await runSingleTestFile(this, node.file!);
             } else if (node.type === "suite") {
