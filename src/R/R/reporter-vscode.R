@@ -22,7 +22,7 @@ VsCodeReporter <- R6::R6Class("VsCodeReporter",
     },
 
     start_reporter = function() {
-      self$cat_json(list(type = "started", tests = list(self$suite_name)))
+      self$cat_json(list(type = "start_reporter", tests = list(self$suite_name)))
     },
 
     start_context = function(context) {
@@ -44,6 +44,7 @@ VsCodeReporter <- R6::R6Class("VsCodeReporter",
     },
 
     end_reporter = function() {
+      self$cat_json(list(type = "end_reporter", tests = list(self$suite_name)))
       if (!self$has_tests) {
         return()
       }
