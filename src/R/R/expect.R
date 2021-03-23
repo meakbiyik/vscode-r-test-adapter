@@ -14,7 +14,7 @@ test_one_file <- function(path, env = test_env(), wrap = TRUE) {
   reporter <- testthat::get_reporter()
 
   reporter$start_file(path)
-  source_file(path, child_env(env), wrap = wrap)
+  source_file(path, rlang::child_env(env), wrap = wrap)
   reporter$end_context_if_started()
   reporter$end_file()
 }
