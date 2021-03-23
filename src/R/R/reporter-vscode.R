@@ -32,7 +32,7 @@ VsCodeReporter <- R6::R6Class("VsCodeReporter",
     },
 
     start_test = function(context, test) {
-      self$cat_json(list(type = "start_test", context = context, test = test))
+      self$cat_json(list(type = "start_test", test = test))
     },
 
     add_result = function(context, test, result) {
@@ -47,7 +47,7 @@ VsCodeReporter <- R6::R6Class("VsCodeReporter",
     },
 
     end_test = function(context, test) {
-      self$cat_json(list(type = "end_test", context = context, test = test))
+      self$cat_json(list(type = "end_test", test = test))
     },
 
     end_file = function() {
