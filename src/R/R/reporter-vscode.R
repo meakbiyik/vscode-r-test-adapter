@@ -6,7 +6,7 @@
 #'
 #' @export
 #' @family reporters
-TapReporter <- R6::R6Class("TapReporter",
+VsCodeReporter <- R6::R6Class("VsCodeReporter",
   inherit = Reporter,
   public = list(
     results = list(),
