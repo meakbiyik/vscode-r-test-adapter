@@ -9,3 +9,13 @@ expect_snapshot_reporter <- function(reporter, path = test_path("reporters/tests
     )
   })
 }
+
+test_one_file <- function(path, env = test_env(), wrap = TRUE) {
+  reporter <- testthat::get_reporter()
+  on.exit(testthat::teardown_run(), add = TRUE)
+
+  reporter$start_file(path)
+  source_file(path, child_env(env), wrap = wrap)
+  reporter$end_context_if_started()
+  reporter$end_file()
+}
