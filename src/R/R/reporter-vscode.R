@@ -34,6 +34,14 @@ VsCodeReporter <- R6::R6Class("VsCodeReporter",
     },
 
     add_result = function(context, test, result) {
+      self$cat_json(list(
+        type = "add_result",
+        context = context,
+        test = test,
+        result = expectation_type(result),
+        message = exp_message(result),
+        location = expectation_location(result)
+      ))
       self$has_tests <- TRUE
       self$n <- self$n + 1L
       self$results[[self$n]] <- result
@@ -88,3 +96,24 @@ expectation_skip    <- function(exp) expectation_type(exp) == "skip"
 expectation_warning <- function(exp) expectation_type(exp) == "warning"
 expectation_broken  <- function(exp) expectation_failure(exp) || expectation_error(exp)
 expectation_ok      <- function(exp) expectation_type(exp) %in% c("success", "warning")
+
+exp_message <- function(x) {
+  if (expectation_error(x)) {
+    paste0("Error: ", x$message)
+  } else {
+    x$message
+  }
+}
+
+expectation_location <- function(x) {
+  if (is.null(x$srcref)) {
+    "???"
+  } else {
+    filename <- attr(x$srcref, "srcfile")$filename
+    if (identical(filename, "")) {
+      paste0("Line ", x$srcref[1])
+    } else {
+      paste0(basename(filename), ":", x$srcref[1], ":", x$srcref[2])
+    }
+  }
+}
