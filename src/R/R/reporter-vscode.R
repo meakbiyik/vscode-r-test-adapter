@@ -9,14 +9,20 @@
 VsCodeReporter <- R6::R6Class("VsCodeReporter",
   inherit = Reporter,
   public = list(
+    suite_name = NULL,
     results = list(),
     n = 0L,
     has_tests = FALSE,
     contexts = NA_character_,
 
-    initialize = function(...) {
+    initialize = function(suite_name, ...) {
       super$initialize(...)
+      self$suite_name <- suite_name
       self$capabilities$parallel_support <- TRUE
+    },
+
+    start_reporter = function() {
+      self$cat_json(list(type = "started", tests = list(self$suite_name)))
     },
 
     start_context = function(context) {
@@ -53,6 +59,10 @@ VsCodeReporter <- R6::R6Class("VsCodeReporter",
           )
         }
       }
+    },
+
+    cat_json = function(x) {
+      self$cat_line(jsonlite::toJSON(x, auto_unbox = TRUE))
     }
   )
 )
