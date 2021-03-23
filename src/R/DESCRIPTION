@@ -1,5 +1,5 @@
-Package: R
-Title: What the Package Does (One Line, Title Case)
+Package: rtestexplorer
+Title: Test Reporters For R Test Explorer
 Version: 0.0.0.9000
 Date: 2021-03-23
 Authors@R: 
@@ -8,10 +8,8 @@ Authors@R:
            role = c("aut", "cre"),
            email = "krlmlr+r@mailbox.org",
            comment = c(ORCID = "0000-0002-1416-3412"))
-Description: What the package does (one paragraph).
+Description: A test reporter for the R Test Explorer.
 License: GPL-3
-URL: https://github.com/krlmlr/R, https://krlmlr.github.io/R
-BugReports: https://github.com/krlmlr/R/issues
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
