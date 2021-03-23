@@ -9,7 +9,7 @@ Authors@R:
            email = "krlmlr+r@mailbox.org",
            comment = c(ORCID = "0000-0002-1416-3412"))
 Description: A test reporter for the R Test Explorer.
-License: GPL-3
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
