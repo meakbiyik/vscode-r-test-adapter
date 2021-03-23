@@ -26,8 +26,11 @@ VsCodeReporter <- R6::R6Class("VsCodeReporter",
     },
 
     start_context = function(context) {
-      self$cat_json(list(type = "suite", suite = self$suite_name, state = "running"))
       self$contexts[self$n + 1] <- context
+    },
+
+    start_test = function(context, test) {
+      self$cat_json(list(type = "start_test", context = context, test = test))
     },
 
     add_result = function(context, test, result) {
@@ -36,8 +39,8 @@ VsCodeReporter <- R6::R6Class("VsCodeReporter",
       self$results[[self$n]] <- result
     },
 
-    end_context = function(context) {
-      self$cat_json(list(type = "suite", suite = self$suite_name, state = "completed"))
+    end_test = function(context, test) {
+      self$cat_json(list(type = "end_test", context = context, test = test))
     },
 
     end_reporter = function() {
