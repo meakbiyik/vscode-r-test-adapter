@@ -1,6 +1,16 @@
 # reporter works
 
     {"type":"started","tests":["suite_name"]}
+    {"type":"suite","suite":"suite_name","state":"running"}
+    {"type":"suite","suite":"suite_name","state":"completed"}
+    {"type":"suite","suite":"suite_name","state":"running"}
+    {"type":"suite","suite":"suite_name","state":"completed"}
+    {"type":"suite","suite":"suite_name","state":"running"}
+    {"type":"suite","suite":"suite_name","state":"completed"}
+    {"type":"suite","suite":"suite_name","state":"running"}
+    {"type":"suite","suite":"suite_name","state":"completed"}
+    {"type":"suite","suite":"suite_name","state":"running"}
+    {"type":"suite","suite":"suite_name","state":"completed"}
     1..13
     ok 1 # WARNING `context()` was deprecated in the 3rd edition.
     Backtrace:
