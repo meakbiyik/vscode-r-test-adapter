@@ -1,11 +1,9 @@
-#' Test reporter: TAP format.
+#' Test reporter: VS Code format.
 #'
-#' This reporter will output results in the Test Anything Protocol (TAP),
-#' a simple text-based interface between testing modules in a test harness.
-#' For more information about TAP, see http://testanything.org
+#' This reporter will output results in a format understood by the
+#' [R Test Explorer](https://github.com/meakbiyik/vscode-r-test-adapter).
 #'
 #' @export
-#' @family reporters
 VsCodeReporter <- R6::R6Class("VsCodeReporter",
   inherit = Reporter,
   private = list(
