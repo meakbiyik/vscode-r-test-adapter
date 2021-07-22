@@ -77,12 +77,15 @@ export abstract class RAdapter implements TestAdapter {
 
         this.testsEmitter.fire(<TestLoadStartedEvent>{ type: "started" });
         const loadedTests = await this.loadTests();
-        this.testsEmitter.fire(<TestLoadFinishedEvent>{
-            type: "finished",
-            suite: loadedTests,
-        });
-
-        this.log.info(`Tests loaded`);
+        if (loadedTests.children.length > 0) {
+            this.testsEmitter.fire(<TestLoadFinishedEvent>{
+                type: "finished",
+                suite: loadedTests,
+            });
+            this.log.info(`Tests loaded`);
+        } else {
+            this.log.info(`No tests found`);
+        }
         this.isLoading = false;
     }
 
