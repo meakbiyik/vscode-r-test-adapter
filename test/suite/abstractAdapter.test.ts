@@ -176,7 +176,7 @@ suite("abstractAdapter", () => {
         expect(childProcess.killed).to.be.true;
         expect(errorInProcess).to.be.true;
         testAdapter.dispose();
-    });
+    }).retries(10);
 
     test("Disposable without error", () => {
         let testAdapter = new FakeAdapter(workspaceFolder, log);
