@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - XX.XX.XXXX
 
+## [0.4.1] - 22.07.2021
+### Fixed
+- Issues with parsing test outputs for new versions of R / testthat (#12)
+- Ubuntu CI issues with Azure pipelines
+
 ## [0.4.0] - 22.03.2021
 ### Added
 - Support for BDD testing functionality of testthat (i.e. `describe`-`it`)
