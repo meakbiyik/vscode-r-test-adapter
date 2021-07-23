@@ -1,0 +1,21 @@
+Package: rtestexplorer
+Title: Test Reporters For R Test Explorer
+Version: 0.0.0.9000
+Date: 2021-03-23
+Authors@R: 
+    person(given = "Kirill",
+           family = "Müller",
+           role = c("aut", "cre"),
+           email = "krlmlr+r@mailbox.org",
+           comment = c(ORCID = "0000-0002-1416-3412"))
+Description: A test reporter for the R Test Explorer.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1.9001
+Imports: 
+    rlang,
+    testthat (>= 3.0.0),
+    withr
+Config/testthat/edition: 3
