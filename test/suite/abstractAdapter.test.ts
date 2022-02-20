@@ -3,7 +3,6 @@ import { Log } from "vscode-test-adapter-util";
 import { expect } from "chai";
 import * as path from "path";
 import * as tmp from "tmp-promise";
-import * as crypto from "crypto";
 import { exec } from "child_process";
 import { RAdapter } from "../../src/abstractAdapter";
 import { TestSuiteInfo } from "vscode-test-adapter-api";
@@ -32,7 +31,7 @@ export class FakeAdapter extends RAdapter {
     }
 
     loadTests() {
-        return <Promise<TestSuiteInfo>>{};
+        return <Promise<{ tests: TestSuiteInfo; errorMessage?: string }>>{};
     }
     runTests(a: string[]) {
         return <Promise<void>>{};
@@ -58,13 +57,15 @@ suite("abstractAdapter", () => {
         let testAdapter = new FakeAdapter(workspaceFolder, log);
         testAdapter.loadTests = async () => {
             return Promise.resolve({
-                type: "suite",
-                id: "",
-                label: "",
-                children: [],
+                tests: {
+                    type: "suite",
+                    id: "",
+                    label: "",
+                    children: [],
+                },
             });
         };
-        let tmpFileName = `test-temp${randomChars()}.R`;
+        let tmpFileName = `test-temp.R`;
         let testLoadStartedFiredFlag = false;
         let testLoadFinishedFiredFlag = false;
         testAdapter.testsEmitter.event((e) => {
@@ -89,13 +90,15 @@ suite("abstractAdapter", () => {
         let testAdapter = new FakeAdapter(workspaceFolder, log);
         testAdapter.loadTests = () => {
             return Promise.resolve({
-                type: "suite",
-                id: "",
-                label: "",
-                children: [],
+                tests: {
+                    type: "suite",
+                    id: "",
+                    label: "",
+                    children: [],
+                },
             });
         };
-        let tmpFileName = `test-temp${randomChars()}.R`;
+        let tmpFileName = `test-temp.R`;
         let tmpFilePath = path.normalize(path.join(testRepoTestsPath, tmpFileName));
         testAdapter.tempFilePaths.add(tmpFilePath);
         let testLoadStartedFiredFlag = false;
@@ -122,10 +125,12 @@ suite("abstractAdapter", () => {
         let testAdapter = new FakeAdapter(workspaceFolder, log);
         testAdapter.loadTests = () => {
             return Promise.resolve({
-                type: "suite",
-                id: "",
-                label: "",
-                children: [],
+                tests: {
+                    type: "suite",
+                    id: "",
+                    label: "",
+                    children: [],
+                },
             });
         };
         let testLoadStartedFiredFlag = false;
@@ -183,24 +188,3 @@ suite("abstractAdapter", () => {
         testAdapter.dispose();
     });
 });
-
-function randomChars() {
-    const RANDOM_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    const count = 12;
-
-    let value = [],
-        rnd = null;
-
-    // make sure that we do not fail because we ran out of entropy
-    try {
-        rnd = crypto.randomBytes(count);
-    } catch (e) {
-        rnd = crypto.pseudoRandomBytes(count);
-    }
-
-    for (var i = 0; i < 12; i++) {
-        value.push(RANDOM_CHARS[rnd[i] % RANDOM_CHARS.length]);
-    }
-
-    return value.join("");
-}

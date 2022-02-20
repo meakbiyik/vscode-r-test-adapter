@@ -2,7 +2,6 @@ import * as core from "../../../src/testthat/adapter";
 import * as vscode from "vscode";
 import { Log } from "vscode-test-adapter-util";
 import * as path from "path";
-import * as crypto from "crypto";
 import * as tmp from "tmp-promise";
 import * as util from "util";
 import * as fs from "fs";
@@ -36,8 +35,8 @@ suite("TestthatAdapter", () => {
 
     test("Load is triggered on change", async () => {
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
-        testAdapter.loadTests = () => <Promise<TestSuiteInfo>>{};
-        let tmpFileName = `test-temp${randomChars()}.R`;
+        testAdapter.loadTests = () => <Promise<{ tests: TestSuiteInfo }>>(<unknown>{ tests: {} });
+        let tmpFileName = "test-temp.R";
         let testLoadStartedFiredFlag = false;
         let testLoadFinishedFiredFlag = false;
         testAdapter.testsEmitter.event((e) => {
@@ -67,8 +66,9 @@ suite("TestthatAdapter", () => {
             } catch (e) {}
         }
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
+        testAdapter.tempFilePaths = new Set(["test-temp.R"]);
         (<any>testAdapter).isLoading = true;
-        let tests = await testAdapter.loadTests();
+        let { tests } = await testAdapter.loadTests();
         expect(tests).to.be.deep.equalInAnyOrder(testRepoStructure);
         testAdapter.dispose();
     });
@@ -82,6 +82,7 @@ suite("TestthatAdapter", () => {
             } catch (e) {}
         }
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
+        testAdapter.tempFilePaths = new Set(["test-temp.R"]);
         testAdapter.testSuite = testRepoStructure;
         let testStatesRunningFlag = false;
         let testStatesErroredFlag = false;
@@ -104,8 +105,8 @@ suite("TestthatAdapter", () => {
             if (e.type == "test" && e.state == "passed") testStatesPassed = true;
         });
         (<any>testAdapter).isRunning = true;
-        expect(testAdapter.runTests(["root"])).to.eventually.be.fulfilled;
-        await sleep(20000); // ensure events are fired
+        expect(testAdapter.runTests(["root"], "placeholder")).to.eventually.be.fulfilled;
+        await sleep(30000); // ensure events are fired
         expect(testStatesRunningFlag).to.be.true;
         expect(testStatesErroredFlag).to.be.false;
         expect(testStatesFailedFlag).to.be.true;
@@ -123,6 +124,7 @@ suite("TestthatAdapter", () => {
             } catch (e) {}
         }
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
+        testAdapter.tempFilePaths = new Set(["test-temp.R"]);
         testAdapter.testSuite = testRepoStructure;
         let testStatesRunningFlag = false;
         let testStatesErroredFlag = false;
@@ -145,7 +147,8 @@ suite("TestthatAdapter", () => {
             if (e.type == "test" && e.state == "passed") testStatesPassed = true;
         });
         (<any>testAdapter).isRunning = true;
-        expect(testAdapter.runTests(["test-memoize.R&can memoize"])).to.eventually.be.fulfilled;
+        expect(testAdapter.runTests(["test-memoize.R&can memoize"], "placeholder")).to.eventually.be
+            .fulfilled;
         await sleep(10000); // ensure events are fired
         expect(testStatesRunningFlag).to.be.true;
         expect(testStatesErroredFlag).to.be.false;
@@ -164,6 +167,7 @@ suite("TestthatAdapter", () => {
             } catch (e) {}
         }
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
+        testAdapter.tempFilePaths = new Set(["test-temp.R"]);
         testAdapter.testSuite = testRepoStructure;
         let testStatesRunningFlag = false;
         let testStatesErroredFlag = false;
@@ -186,8 +190,8 @@ suite("TestthatAdapter", () => {
             if (e.type == "test" && e.state == "passed") testStatesPassed = true;
         });
         (<any>testAdapter).isRunning = true;
-        expect(testAdapter.runTests(["test-fallbacks.R&username() falls back"])).to.eventually.be
-            .fulfilled;
+        expect(testAdapter.runTests(["test-fallbacks.R&username() falls back"], "placeholder")).to
+            .eventually.be.fulfilled;
         await sleep(10000); // ensure events are fired
         expect(testStatesRunningFlag).to.be.true;
         expect(testStatesErroredFlag).to.be.false;
@@ -206,6 +210,7 @@ suite("TestthatAdapter", () => {
             } catch (e) {}
         }
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
+        testAdapter.tempFilePaths = new Set(["test-temp.R"]);
         testAdapter.testSuite = testRepoStructure;
         let testStatesRunningFlag = false;
         let testStatesErroredFlag = false;
@@ -228,8 +233,8 @@ suite("TestthatAdapter", () => {
             if (e.type == "test" && e.state == "passed") testStatesPassed = true;
         });
         (<any>testAdapter).isRunning = true;
-        expect(testAdapter.runTests(["test-email.R&Email address works"])).to.eventually.be
-            .fulfilled;
+        expect(testAdapter.runTests(["test-email.R&Email address works"], "placeholder")).to
+            .eventually.be.fulfilled;
         await sleep(10000); // ensure events are fired
         expect(testStatesRunningFlag).to.be.true;
         expect(testStatesErroredFlag).to.be.false;
@@ -239,26 +244,6 @@ suite("TestthatAdapter", () => {
         testAdapter.dispose();
     });
 });
-
-function randomChars() {
-    const RANDOM_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    const count = 12;
-
-    let value = [],
-        rnd = null;
-
-    try {
-        rnd = crypto.randomBytes(count);
-    } catch (e) {
-        rnd = crypto.pseudoRandomBytes(count);
-    }
-
-    for (var i = 0; i < 12; i++) {
-        value.push(RANDOM_CHARS[rnd[i] % RANDOM_CHARS.length]);
-    }
-
-    return value.join("");
-}
 
 const testRepoStructure: TestSuiteInfo = {
     type: "suite",

@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
+import { v4 as uuid } from "uuid";
 import {
     TestAdapter,
     TestLoadStartedEvent,
@@ -58,8 +59,8 @@ export abstract class RAdapter implements TestAdapter {
         this.log.info(`Initialized ${this.name} adapter`);
     }
 
-    abstract loadTests(): Promise<TestSuiteInfo>;
-    abstract runTests(tests: string[]): Promise<void>;
+    abstract loadTests(): Promise<{ tests: TestSuiteInfo; errorMessage?: string }>;
+    abstract runTests(tests: string[], testRunId: string): Promise<void>;
 
     loadOnChange(e: vscode.Uri) {
         if (!this.tempFilePaths.has(path.normalize(e.fsPath))) {
@@ -76,15 +77,16 @@ export abstract class RAdapter implements TestAdapter {
         this.log.info(`Loading ${this.name} tests`);
 
         this.testsEmitter.fire(<TestLoadStartedEvent>{ type: "started" });
-        const loadedTests = await this.loadTests();
-        if (loadedTests.children !== undefined && loadedTests.children.length > 0) {
+        const { tests, errorMessage } = await this.loadTests();
+        if (tests.children !== undefined && tests.children.length > 0) {
             this.log.info(`Tests loaded`);
         } else {
             this.log.info(`No tests found`);
         }
         this.testsEmitter.fire(<TestLoadFinishedEvent>{
             type: "finished",
-            suite: loadedTests,
+            suite: tests,
+            errorMessage: errorMessage,
         });
         this.isLoading = false;
     }
@@ -92,14 +94,16 @@ export abstract class RAdapter implements TestAdapter {
     async run(tests: string[]): Promise<void> {
         if (this.isRunning) return;
         this.isRunning = true;
-        this.log.info(`Running ${this.name} tests ${JSON.stringify(tests)}`);
+        let testRunId = uuid();
+        this.log.info(`Running ${this.name} tests ${JSON.stringify(tests)} with id ${testRunId}`);
 
         this.testStatesEmitter.fire(<TestRunStartedEvent>{
             type: "started",
             tests,
+            testRunId,
         });
-        await this.runTests(tests);
-        this.testStatesEmitter.fire(<TestRunFinishedEvent>{ type: "finished" });
+        await this.runTests(tests, testRunId);
+        this.testStatesEmitter.fire(<TestRunFinishedEvent>{ type: "finished", testRunId });
 
         this.log.info(`Test run finished`);
         this.isRunning = false;

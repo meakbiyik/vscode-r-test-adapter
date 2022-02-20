@@ -4,41 +4,89 @@ import * as path from "path";
 import * as winreg from "winreg";
 import * as fs from "fs";
 import * as tmp from "tmp-promise";
-import { exec } from "child_process";
+import { spawn } from "child_process";
 import * as vscode from "vscode";
-import * as crypto from "crypto";
-import { TestInfo, TestSuiteInfo } from "vscode-test-adapter-api";
-import { findTests } from "./parser";
+import * as split2 from "split2";
+import { TestEvent, TestInfo, TestSuiteInfo } from "vscode-test-adapter-api";
+import { encodeNodeId, findTests } from "./parser";
 import { appendFile as _appendFile } from "fs";
 import { TestthatAdapter } from "./adapter";
 import { lookpath } from "lookpath";
+import { TestResult } from "./reporter";
 
 const appendFile = util.promisify(_appendFile);
+const testReporterPath = path
+    .join(__dirname, "..", "..", "..", "src", "testthat", "reporter")
+    .replace(/\\/g, "/");
+const resultMap: Record<string, string> = {
+    success: "passed",
+    failure: "failed",
+    error: "errored",
+    skip: "skipped",
+    warning: "passed",
+};
 let RscriptPath: string | undefined;
 
 export async function runSingleTestFile(
     adapter: TestthatAdapter,
-    filePath: string
+    filePath: string,
+    node: TestSuiteInfo | TestInfo,
+    testRunId: string
 ): Promise<string> {
     let cleanFilePath = filePath.replace(/\\/g, "/");
     let projectDirMatch = cleanFilePath.match(/(.+?)\/tests\/testthat.+?/i);
-    let devtoolsCall = `options("testthat.use_colours"=F);devtools::test_file('${cleanFilePath}')`;
+    let devtoolsCall = `devtools::load_all('${testReporterPath}');devtools::test_active_file('${cleanFilePath}',reporter=VSCodeReporter)`;
     let RscriptCommand = await getRscriptCommand(adapter);
     let command = `${RscriptCommand} -e "${devtoolsCall}"`;
     let cwd = projectDirMatch
         ? projectDirMatch[1]
         : vscode.workspace.workspaceFolders![0].uri.fsPath;
     return new Promise(async (resolve, reject) => {
-        let childProcess = exec(command, { cwd }, (err, stdout: string, stderr: string) => {
+        let childProcess = spawn(command, { cwd, shell: true });
+        let stdout = "";
+        adapter.childProcess = childProcess;
+        childProcess.stdout!.pipe(split2(JSON.parse)).on("data", (data: TestResult) => {
+            stdout += JSON.stringify(data);
+            if (data.type === undefined) return;
+            if (
+                data.type === "add_result" &&
+                data.result !== undefined &&
+                data.test !== undefined
+            ) {
+                let state = resultMap[data.result];
+                adapter.testStatesEmitter.fire(<TestEvent>{
+                    type: "test",
+                    test: node.type === "test" ? node.id : encodeNodeId(data.filename!, data.test),
+                    state: state,
+                    message: data.message ? data.message : undefined,
+                    testRunId,
+                });
+            }
+            if (data.type === "start_test" && data.test !== undefined) {
+                adapter.testStatesEmitter.fire(<TestEvent>{
+                    type: "test",
+                    test: node.type === "test" ? node.id : encodeNodeId(data.filename!, data.test),
+                    state: "running",
+                    testRunId,
+                });
+            }
+        });
+        childProcess.once("exit", () => {
             adapter.childProcess = undefined;
-            if (err) reject(stderr);
             resolve(stdout);
         });
-        adapter.childProcess = childProcess;
+        childProcess.once("error", (err) => {
+            adapter.childProcess = undefined;
+            reject(err);
+        });
     });
 }
 
-export async function runDescribeTestSuite(adapter: TestthatAdapter, suite: TestSuiteInfo) {
+export async function runDescribeTestSuite(
+    adapter: TestthatAdapter,
+    suite: TestSuiteInfo,
+    testRunId: string
+) {
     let documentUri = Uri.file(suite.file!);
     let document = await workspace.openTextDocument(documentUri);
     let source = document.getText();
@@ -58,8 +106,7 @@ export async function runDescribeTestSuite(adapter: TestthatAdapter, suite: Test
         }
     }
 
-    let randomFileInfix = randomChars();
-    let tmpFileName = `test-${randomFileInfix}.R`;
+    let tmpFileName = `test-${testRunId}.R`;
     let tmpFilePath = path.normalize(path.join(path.dirname(suite.file!), tmpFileName));
     adapter.tempFilePaths.add(tmpFilePath); // Do not clean up tempFilePaths, not possible to get around the race condition
     // cleanup is not guaranteed to unlink the file immediately
@@ -68,7 +115,7 @@ export async function runDescribeTestSuite(adapter: TestthatAdapter, suite: Test
         tmpdir: path.dirname(suite.file!),
     });
     await appendFile(tmpFilePath, source);
-    return runSingleTestFile(adapter, tmpFilePath)
+    return runSingleTestFile(adapter, tmpFilePath, suite, testRunId)
         .catch(async (err) => {
             await tmpFileResult.cleanup();
             throw err;
@@ -79,7 +126,7 @@ export async function runDescribeTestSuite(adapter: TestthatAdapter, suite: Test
         });
 }
 
-export async function runSingleTest(adapter: TestthatAdapter, test: TestInfo) {
+export async function runSingleTest(adapter: TestthatAdapter, test: TestInfo, testRunId: string) {
     let documentUri = Uri.file(test.file!);
     let document = await workspace.openTextDocument(documentUri);
     let source = document.getText();
@@ -99,8 +146,7 @@ export async function runSingleTest(adapter: TestthatAdapter, test: TestInfo) {
         }
     }
 
-    let randomFileInfix = randomChars();
-    let tmpFileName = `test-${randomFileInfix}.R`;
+    let tmpFileName = `test-${testRunId}.R`;
     let tmpFilePath = path.normalize(path.join(path.dirname(test.file!), tmpFileName));
     adapter.tempFilePaths.add(tmpFilePath); // Do not clean up tempFilePaths, not possible to get around the race condition
     // cleanup is not guaranteed to unlink the file immediately
@@ -109,7 +155,7 @@ export async function runSingleTest(adapter: TestthatAdapter, test: TestInfo) {
         tmpdir: path.dirname(test.file!),
     });
     await appendFile(tmpFilePath, source);
-    return runSingleTestFile(adapter, tmpFilePath)
+    return runSingleTestFile(adapter, tmpFilePath, test, testRunId)
         .catch(async (err) => {
             await tmpFileResult.cleanup();
             throw err;
@@ -168,28 +214,6 @@ async function getRscriptCommand(adapter: TestthatAdapter) {
     throw Error("Rscript could not be found in PATH, cannot run the tests.");
 }
 
-function randomChars() {
-    const RANDOM_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    const count = 12;
-
-    let value = [],
-        rnd = null;
-
-    // make sure that we do not fail because we ran out of entropy
-    try {
-        rnd = crypto.randomBytes(count);
-    } catch (e) {
-        rnd = crypto.pseudoRandomBytes(count);
-    }
-
-    for (var i = 0; i < 12; i++) {
-        value.push(RANDOM_CHARS[rnd[i] % RANDOM_CHARS.length]);
-    }
-
-    return value.join("");
-}
-
 export const _unittestable = {
     getRscriptCommand,
-    randomChars,
 };
