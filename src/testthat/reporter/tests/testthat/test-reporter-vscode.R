@@ -1,13 +1,10 @@
 expect_snapshot_reporter <- function(reporter, path = test_path("reporters/tests.R")) {
-  withr::local_rng_version("3.3")
-  withr::with_seed(1014, {
-    expect_snapshot_output(
-      with_reporter(
-        reporter,
-        test_one_file(path)
-      )
+  expect_snapshot_output(
+    with_reporter(
+      reporter,
+      test_one_file(path)
     )
-  })
+  )
 }
 
 test_one_file <- function(path, env = test_env(), wrap = TRUE) {
@@ -20,5 +17,5 @@ test_one_file <- function(path, env = test_env(), wrap = TRUE) {
 }
 
 test_that("reporter works", {
-  expect_snapshot_reporter(VSCodeReporter$new("suite_name"))
+  expect_snapshot_reporter(VSCodeReporter)
 })
