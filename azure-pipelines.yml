@@ -11,9 +11,9 @@ strategy:
     linux:
       imageName: 'ubuntu-latest'
     mac:
-      imageName: 'macos-10.14'
+      imageName: 'macos-latest'
     windows:
-      imageName: 'vs2017-win2016'
+      imageName: 'windows-latest'
 
 pool:
   vmImage: $(imageName)
@@ -47,7 +47,12 @@ steps:
 - bash: |
     Rscript -e "install.packages('devtools', repos = 'http://cran.us.r-project.org', type='binary');install.packages('mockery',repos = 'http://cran.us.r-project.org', type='binary')"
   displayName: 'Install devtools'
-  condition: ne(variables['Agent.OS'], 'Linux')
+  condition: eq(variables['Agent.OS'], 'Windows_NT')
+
+- bash: |
+    Rscript -e "install.packages('devtools', repos = 'http://cran.us.r-project.org', type='mac.binary');install.packages('mockery',repos = 'http://cran.us.r-project.org', type='mac.binary')"
+  displayName: 'Install devtools'
+  condition: eq(variables['Agent.OS'], 'Darwin')
 
 - bash: |
     /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
