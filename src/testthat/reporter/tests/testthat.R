@@ -1,4 +1,4 @@
 library(testthat)
-library(rtestexplorer)
+library(testthatreporter)
 
-test_check("rtestexplorer")
+test_check("testthatreporter")
