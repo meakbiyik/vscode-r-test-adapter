@@ -1,5 +1,5 @@
-Package: testthatreporter
-Title: 'testthat' Test Reporter for R Test Explorer
+Package: vscodereporter
+Title: 'testthat' Test Reporter for R Test Explorer VSCode Extension
 Version: 0.0.1
 Date: 2022-02-20
 Authors@R: 
@@ -12,7 +12,7 @@ Authors@R:
            family = "Akbiyik",
            role = c("cre", "cph"),
            email = "erenakbiyik@gmail.com"))
-Description: A test reporter of 'testthat' package for the R Test Explorer.
+Description: A test reporter of 'testthat' package for the R Test Explorer extension of VSCode editor.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

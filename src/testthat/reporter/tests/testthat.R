@@ -1,4 +1,4 @@
 library(testthat)
-library(testthatreporter)
+library(vscodereporter)
 
-test_check("testthatreporter")
+test_check("vscodereporter")

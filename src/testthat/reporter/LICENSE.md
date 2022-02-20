@@ -1,6 +1,6 @@
 # MIT License
 
-Copyright (c) 2021 testthatreporter authors
+Copyright (c) 2021 vscodereporter authors
 
 Copyright (c) 2013-2019 Hadley Wickham; RStudio
 
