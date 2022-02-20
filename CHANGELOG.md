@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased] - XX.XX.XXXX
+### Added
+- Test results are reported as soon as the test is run, instead of waiting for the file to be exhausted.
+
+### Changed
+- Now the adapter has a testthat reporter of its own! Thanks a lot for the contribution @krlmlr
+- Support for the new version of vscode-test-adapter-api
+
+### Fixed
+- Repeated issues with testthat's new versions (#12)
 
 ## [0.4.1] - 22.07.2021
 ### Fixed

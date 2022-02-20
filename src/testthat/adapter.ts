@@ -10,7 +10,7 @@ import {
 import { Log } from "vscode-test-adapter-util";
 import * as path from "path";
 import { RAdapter } from "../abstractAdapter";
-import { parseTestsFromFile, encodeNodeId } from "./parser";
+import { parseTestsFromFile } from "./parser";
 import { runSingleTestFile, runSingleTest, runDescribeTestSuite } from "./runner";
 
 export class TestthatAdapter extends RAdapter {
@@ -33,7 +33,7 @@ export class TestthatAdapter extends RAdapter {
         this.disposables.push(this.watcher);
     }
 
-    async loadTests(): Promise<TestSuiteInfo> {
+    async loadTests(): Promise<{ tests: TestSuiteInfo; errorMessage?: string }> {
         this.testSuite = {
             type: "suite",
             id: "root",
@@ -49,7 +49,8 @@ export class TestthatAdapter extends RAdapter {
             );
         } catch (error) {
             this.log.error(error);
-            return this.testSuite;
+            let error_message = String(error);
+            return Promise.resolve({ tests: this.testSuite, errorMessage: error_message });
         }
 
         for (const testFile of testFiles) {
@@ -81,14 +82,14 @@ export class TestthatAdapter extends RAdapter {
             }
         }
 
-        return Promise.resolve(this.testSuite);
+        return Promise.resolve({ tests: this.testSuite });
     }
 
-    async runTests(tests: string[]): Promise<void> {
+    async runTests(tests: string[], testRunId: string): Promise<void> {
         for (const suiteOrTestId of tests) {
             const node = this.findNode(this.testSuite, suiteOrTestId);
             if (node) {
-                await this.runNode(node);
+                await this.runNode(node, testRunId);
             }
         }
     }
@@ -108,48 +109,31 @@ export class TestthatAdapter extends RAdapter {
         return undefined;
     }
 
-    async runNode(node: TestSuiteInfo | TestInfo): Promise<void> {
+    async runNode(node: TestSuiteInfo | TestInfo, testRunId: string): Promise<void> {
         let testStatesEmitter: vscode.EventEmitter<
             TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent
         > = this.testStatesEmitter;
 
-        let stdout: string | undefined;
-
-        if (node.type === "suite" && node.file === undefined) {
+        if (node.type === "suite") {
             testStatesEmitter.fire(<TestSuiteEvent>{
                 type: "suite",
                 suite: node.id,
                 state: "running",
-            });
-        } else {
-            this.callRecursive(node, (node) => {
-                if (node.type === "suite") {
-                    testStatesEmitter.fire(<TestSuiteEvent>{
-                        type: "suite",
-                        suite: node.id,
-                        state: "running",
-                    });
-                } else {
-                    testStatesEmitter.fire(<TestEvent>{
-                        type: "test",
-                        test: node.id,
-                        state: "running",
-                    });
-                }
+                testRunId,
             });
         }
 
         try {
             if (node.type === "suite" && node.file === undefined) {
                 for (const child of node.children) {
-                    await this.runNode(child);
+                    await this.runNode(child, testRunId);
                 }
             } else if (node.type === "suite" && node.line === undefined) {
-                stdout = await runSingleTestFile(this, node.file!);
+                await runSingleTestFile(this, node.file!, node, testRunId);
             } else if (node.type === "suite") {
-                stdout = await runDescribeTestSuite(this, node);
+                await runDescribeTestSuite(this, node, testRunId);
             } else {
-                stdout = await runSingleTest(this, node);
+                await runSingleTest(this, node, testRunId);
             }
         } catch (error) {
             this.log.error(error);
@@ -160,13 +144,10 @@ export class TestthatAdapter extends RAdapter {
                         test: node.id,
                         state: "errored",
                         message: error,
+                        testRunId,
                     });
                 }
             });
-        }
-
-        if (stdout !== undefined) {
-            this.emitTestResults(stdout, node, testStatesEmitter);
         }
 
         this.callRecursive(node, (node) => {
@@ -175,6 +156,7 @@ export class TestthatAdapter extends RAdapter {
                     type: "suite",
                     suite: node.id,
                     state: "completed",
+                    testRunId,
                 });
             }
         });
@@ -188,71 +170,5 @@ export class TestthatAdapter extends RAdapter {
         if (startNode.type === "suite") {
             for (const child of startNode.children) this.callRecursive(child, func);
         }
-    }
-
-    emitTestResults(
-        stdout: string,
-        node: TestSuiteInfo | TestInfo,
-        testStatesEmitter: vscode.EventEmitter<
-            TestRunStartedEvent | TestRunFinishedEvent | TestSuiteEvent | TestEvent
-        >
-    ) {
-        let fileName = node.file ? path.basename(node.file) : undefined;
-        let failedTests = this.getFailedTests(stdout, fileName);
-        let skippedTests = this.getSkippedTests(stdout, fileName);
-        this.callRecursive(node, (node) => {
-            if (node.type === "test") {
-                let state = "passed";
-                let message = undefined;
-                if (failedTests.has(node.id)) {
-                    state = "failed";
-                    message = failedTests.get(node.id);
-                }
-                if (skippedTests.has(node.id)) {
-                    state = "skipped";
-                    message = skippedTests.get(node.id);
-                }
-                testStatesEmitter.fire(<TestEvent>{
-                    type: "test",
-                    test: node.id,
-                    state: state,
-                    message: message,
-                });
-            }
-        });
-    }
-
-    getFailedTests(stdout: string, testFileName?: string) {
-        const failureRegex = /(failure|error) \((?<fileName>.+?):\d+:\d+\): (?<label>.+?)( [-─]*)(\r\n|\r|\n)(?<reason>[\w\W]+?)(?=(\n[-─]+\s*skip|\n[-─]+\s*failure|\n[-─]+\s*warn|\n[-─]+\s*error|\r\[))/gi;
-        let failedTests = new Map<string, string>();
-        let match;
-        while ((match = failureRegex.exec(stdout))) {
-            let testLabel = match.groups!["label"];
-            let fileName = match.groups!["fileName"];
-            let reason = match.groups!["reason"];
-            let id = testFileName
-                ? encodeNodeId(testFileName, testLabel)
-                : encodeNodeId(fileName, testLabel);
-            let previousReasons = failedTests.get(id) ? failedTests.get(id) : "";
-            failedTests.set(id, previousReasons + reason + "\n\n");
-        }
-        return failedTests;
-    }
-
-    getSkippedTests(stdout: string, testFileName?: string) {
-        const skipRegex = /skip \((?<fileName>.+?):\d+:\d+\): (?<label>.+?)( [-─]*)(\r\n|\r|\n)(?<reason>[\w\W]+?)(?=(\n[-─]+\s*skip|\n[-─]+\s*failure|\n[-─]+\s*warn|\n[-─]+\s*error|\r\[))/gi;
-        let skippedTests = new Map<string, string>();
-        let match;
-        while ((match = skipRegex.exec(stdout))) {
-            let testLabel = match.groups!["label"];
-            let fileName = match.groups!["fileName"];
-            let reason = match.groups!["reason"];
-            let id = testFileName
-                ? encodeNodeId(testFileName, testLabel)
-                : encodeNodeId(fileName, testLabel);
-            let previousReasons = skippedTests.get(id) ? skippedTests.get(id) : "";
-            skippedTests.set(id, previousReasons + reason + "\n\n");
-        }
-        return skippedTests;
     }
 }

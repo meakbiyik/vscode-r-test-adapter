@@ -44,11 +44,15 @@
     "coverage": "nyc -x .vscode-test/ -a true -i ts-node/register -i source-map-support/register -r lcov -e .ts -x \"*.test.ts\" npm run test"
   },
   "dependencies": {
+    "@types/split2": "^3.2.1",
+    "@types/uuid": "^8.3.4",
     "lookpath": "^1.1.0",
+    "split2": "^4.1.0",
     "tmp-promise": "^3.0.2",
     "tslib": "^1.9.3",
-    "vscode-test-adapter-api": "^1.7.0",
-    "vscode-test-adapter-util": "^0.7.0",
+    "uuid": "^8.3.2",
+    "vscode-test-adapter-api": "^1.9.0",
+    "vscode-test-adapter-util": "^0.7.1",
     "web-tree-sitter": "^0.18.1",
     "winreg": "^1.2.4"
   },
