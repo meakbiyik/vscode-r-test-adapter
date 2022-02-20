@@ -12,9 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Now the adapter has a testthat reporter of its own! Thanks a lot for the contribution @krlmlr
 - Support for the new version of vscode-test-adapter-api
+- Bumped some dependencies including tree-sitter
 
 ### Fixed
 - Repeated issues with testthat's new versions (#12)
+
+### Removed
+- Some unnecessary dependencies, reducing package size
 
 ## [0.4.1] - 22.07.2021
 ### Fixed
