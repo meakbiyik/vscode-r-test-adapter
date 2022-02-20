@@ -4,7 +4,7 @@
 #' [R Test Explorer](https://github.com/meakbiyik/vscode-r-test-adapter).
 #'
 #' @export
-VsCodeReporter <- R6::R6Class("VsCodeReporter",
+VSCodeReporter <- R6::R6Class("VSCodeReporter",
   inherit = Reporter,
   private = list(
     filename = NULL

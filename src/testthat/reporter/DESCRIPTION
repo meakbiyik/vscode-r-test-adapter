@@ -1,14 +1,18 @@
-Package: rtestexplorer
-Title: Test Reporters For R Test Explorer
-Version: 0.0.0.9000
-Date: 2021-03-23
+Package: testthatreporter
+Title: 'testthat' Test Reporter for R Test Explorer
+Version: 0.0.1
+Date: 2022-02-20
 Authors@R: 
-    person(given = "Kirill",
+    c(person(given = "Kirill",
            family = "Müller",
-           role = c("aut", "cre"),
+           role = c("aut", "cph"),
            email = "krlmlr+r@mailbox.org",
-           comment = c(ORCID = "0000-0002-1416-3412"))
-Description: A test reporter for the R Test Explorer.
+           comment = c(ORCID = "0000-0002-1416-3412")),
+    person(given = "M. Eren",
+           family = "Akbiyik",
+           role = c("cre", "cph"),
+           email = "erenakbiyik@gmail.com"))
+Description: A test reporter of 'testthat' package for the R Test Explorer.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
