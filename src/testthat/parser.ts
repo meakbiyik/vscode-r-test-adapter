@@ -96,7 +96,12 @@ export async function findTests(uri: vscode.Uri) {
             const query = R.query(
                 `
                 (call 
-                    function: (identifier) @_function.name (#eq? @_function.name "test_that")
+                    function: [
+                        (identifier) @_function.name 
+                        (namespace_get 
+                            function: (identifier) @_function.name 
+                        ) (#eq? @_function.name "test_that")
+                    ]
                     arguments: 
                         (arguments 
                             value: (string) @label
