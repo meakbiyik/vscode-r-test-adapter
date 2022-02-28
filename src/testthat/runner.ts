@@ -73,6 +73,10 @@ export async function runSingleTestFile(
         });
         childProcess.once("exit", () => {
             adapter.childProcess = undefined;
+            stdout += childProcess.stderr.read();
+            if (stdout.includes("Execution halted")) {
+                reject(stdout);
+            }
             resolve(stdout);
         });
         childProcess.once("error", (err) => {
