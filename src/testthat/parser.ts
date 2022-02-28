@@ -24,7 +24,7 @@ export async function parseTestsFromFile(
 ): Promise<TestSuiteInfo> {
     let test_suite: TestSuiteInfo = {
         type: "suite",
-        id: uri.path.split("/").pop()!,
+        id: uri.path,
         label: uri.path.split("/").pop()!,
         file: uri.fsPath,
         children: [],
@@ -42,12 +42,11 @@ export async function parseTestsFromFile(
     for (const match of matches) {
         if (match === undefined) continue;
         let testStartLine = match.testStartLine;
-        let fileName = uri.path.split("/").pop()!;
         let testLabel = match.testLabel;
         if (match.testSuperLabel === undefined) {
             test_suite.children.push(<TestInfo>{
                 type: "test",
-                id: encodeNodeId(fileName, testLabel),
+                id: encodeNodeId(uri.fsPath, testLabel),
                 label: testLabel,
                 file: uri.fsPath,
                 line: testStartLine,
@@ -56,7 +55,7 @@ export async function parseTestsFromFile(
             if (subsuites.has(match.testSuperLabel)) {
                 subsuites.get(match.testSuperLabel).children.push(<TestInfo>{
                     type: "test",
-                    id: encodeNodeId(fileName, testLabel, match.testSuperLabel),
+                    id: encodeNodeId(uri.fsPath, testLabel, match.testSuperLabel),
                     label: testLabel,
                     file: uri.fsPath,
                     line: testStartLine,
@@ -64,14 +63,14 @@ export async function parseTestsFromFile(
             } else {
                 let new_subsuite = <TestSuiteInfo>{
                     type: "suite",
-                    id: encodeNodeId(fileName, match.testSuperLabel),
+                    id: encodeNodeId(uri.fsPath, match.testSuperLabel),
                     label: match.testSuperLabel,
                     file: uri.fsPath,
                     line: match.testSuperStartLine,
                     children: [
                         <TestInfo>{
                             type: "test",
-                            id: encodeNodeId(fileName, testLabel, match.testSuperLabel),
+                            id: encodeNodeId(uri.fsPath, testLabel, match.testSuperLabel),
                             label: testLabel,
                             file: uri.fsPath,
                             line: testStartLine,
@@ -183,13 +182,15 @@ export async function findTests(uri: vscode.Uri) {
 }
 
 export function encodeNodeId(
-    fileName: string,
+    filePath: string,
     testLabel: string,
     testSuperLabel: string | undefined = undefined
 ) {
+    let normalizedFilePath = path.normalize(filePath);
+    normalizedFilePath = normalizedFilePath.replace(/^[\\\/]+|[\\\/]+$/g, "");
     return testSuperLabel
-        ? `${fileName}&${testSuperLabel}: ${testLabel}`
-        : `${fileName}&${testLabel}`;
+        ? `${normalizedFilePath}&${testSuperLabel}: ${testLabel}`
+        : `${normalizedFilePath}&${testLabel}`;
 }
 
 export const _unittestable = {

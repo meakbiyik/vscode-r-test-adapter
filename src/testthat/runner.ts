@@ -56,7 +56,7 @@ export async function runSingleTestFile(
                 let state = resultMap[data.result];
                 adapter.testStatesEmitter.fire(<TestEvent>{
                     type: "test",
-                    test: node.type === "test" ? node.id : encodeNodeId(data.filename!, data.test),
+                    test: node.type === "test" ? node.id : encodeNodeId(node.file!, data.test),
                     state: state,
                     message: data.message ? data.message : undefined,
                     testRunId,
@@ -65,7 +65,7 @@ export async function runSingleTestFile(
             if (data.type === "start_test" && data.test !== undefined) {
                 adapter.testStatesEmitter.fire(<TestEvent>{
                     type: "test",
-                    test: node.type === "test" ? node.id : encodeNodeId(data.filename!, data.test),
+                    test: node.type === "test" ? node.id : encodeNodeId(node.file!, data.test),
                     state: "running",
                     testRunId,
                 });
