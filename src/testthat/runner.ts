@@ -43,7 +43,7 @@ export async function runSingleTestFile(
             to be installed in the Rscript environment`)
         );
     }
-    let devtoolsMethod = major < 2 || (major == 2 && minor < 4) ? "test_active_file" : "test_file";
+    let devtoolsMethod = major == 2 && minor < 4 ? "test_file" : "test_active_file";
     let devtoolsCall = `devtools::load_all('${testReporterPath}');devtools::${devtoolsMethod}('${cleanFilePath}',reporter=VSCodeReporter)`;
     let command = `${RscriptCommand} -e "${devtoolsCall}"`;
     let cwd = projectDirMatch
