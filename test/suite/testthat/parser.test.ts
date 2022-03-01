@@ -7,6 +7,7 @@ import { TestInfo, TestSuiteInfo } from "vscode-test-adapter-api";
 import * as chai from "chai";
 import * as deepEqualInAnyOrder from "deep-equal-in-any-order";
 import * as chaiAsPromised from "chai-as-promised";
+import { encodeNodeId } from "../../../src/testthat/parser";
 
 chai.use(chaiAsPromised);
 chai.use(deepEqualInAnyOrder);
@@ -14,6 +15,10 @@ const expect = chai.expect;
 
 const testRepoPath = path.join(__dirname, "..", "..", "..", "..", "test", "testRepo");
 const testRepoTestsPath = path.join(testRepoPath, "tests", "testthat");
+
+function normalize_path(filepath: string): string {
+    return path.normalize(filepath).replace(/^[\\\/]+|[\\\/]+$/g, "");
+}
 
 suite("TestthatParser", () => {
     const workspaceFolder = <vscode.WorkspaceFolder>{
@@ -82,43 +87,60 @@ suite("TestthatParser", () => {
     });
 });
 
-const testEmailRepoStructure: TestSuiteInfo = {
+const testEmailRepoStructure = <TestSuiteInfo>{
     type: "suite",
-    id: "test-email.R",
+    id: vscode.Uri.file(path.join(testRepoTestsPath, "test-email.R")).path,
     label: "test-email.R",
     file: path.join(testRepoTestsPath, "test-email.R"),
     children: [
         <TestInfo>{
             type: "test",
-            id: "test-email.R&Email address works",
+            id: encodeNodeId(
+                normalize_path(path.join(testRepoTestsPath, "test-email.R")),
+                "Email address works"
+            ),
             label: "Email address works",
             file: path.join(testRepoTestsPath, "test-email.R"),
             line: 3,
         },
         <TestInfo>{
             type: "test",
-            id: "test-email.R&EMAIL env var",
+            id: encodeNodeId(
+                normalize_path(path.join(testRepoTestsPath, "test-email.R")),
+                "EMAIL env var"
+            ),
             label: "EMAIL env var",
             file: path.join(testRepoTestsPath, "test-email.R"),
             line: 9,
         },
         <TestSuiteInfo>{
             type: "suite",
-            id: "test-email.R&Email address",
+            id: encodeNodeId(
+                normalize_path(path.join(testRepoTestsPath, "test-email.R")),
+                "Email address"
+            ),
             label: "Email address",
             file: path.join(testRepoTestsPath, "test-email.R"),
             line: 15,
             children: [
                 <TestInfo>{
                     type: "test",
-                    id: "test-email.R&Email address: works",
+                    id: encodeNodeId(
+                        normalize_path(path.join(testRepoTestsPath, "test-email.R")),
+                        "works",
+                        "Email address"
+                    ),
                     label: "works",
                     file: path.join(testRepoTestsPath, "test-email.R"),
                     line: 16,
                 },
                 <TestInfo>{
                     type: "test",
-                    id: "test-email.R&Email address: got EMAIL env var",
+                    id: encodeNodeId(
+                        normalize_path(path.join(testRepoTestsPath, "test-email.R")),
+                        "got EMAIL env var",
+                        "Email address"
+                    ),
                     label: "got EMAIL env var",
                     file: path.join(testRepoTestsPath, "test-email.R"),
                     line: 22,
