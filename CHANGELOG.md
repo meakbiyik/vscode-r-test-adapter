@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - xx.xx.xxxx
 ### Fixed
+
+## [0.5.2] - 01.03.2022
+### Fixed
 - Testthat calls with namespace not being parsed
 - An edge case with BDD testing
 
@@ -101,7 +104,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release of the VS Code R Test Explorer extension.
 - Contains the infrastructure to parse and run R tests written with testthat framework.
 
-[Unreleased]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.4.0...v0.4.1

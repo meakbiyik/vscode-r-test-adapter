@@ -465,9 +465,7 @@ const testRepoStructure: TestSuiteInfo = {
                                         "Email address"
                                     ),
                                     label: "works",
-                                    file: normalize_path(
-                                        path.join(testRepoTestsPath, "test-email.R")
-                                    ),
+                                    file: path.join(testRepoTestsPath, "test-email.R"),
                                     line: 16,
                                 },
                                 <TestInfo>{
