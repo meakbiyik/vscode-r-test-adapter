@@ -41,7 +41,7 @@ suite("TestthatAdapter", () => {
     test("Load is triggered on change", async () => {
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
         testAdapter.loadTests = () => <Promise<{ tests: TestSuiteInfo }>>(<unknown>{ tests: {} });
-        let tmpFileName = "test-temp.R";
+        let tmpFileName = "test-temp3.R";
         let testLoadStartedFiredFlag = false;
         let testLoadFinishedFiredFlag = false;
         testAdapter.testsEmitter.event((e) => {
@@ -71,7 +71,7 @@ suite("TestthatAdapter", () => {
             } catch (e) {}
         }
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
-        testAdapter.tempFilePaths = new Set(["test-temp.R"]);
+        testAdapter.tempFilePaths = new Set(["test-temp1.R", "test-temp2.R", "test-temp3.R"]);
         (<any>testAdapter).isLoading = true;
         let { tests } = await testAdapter.loadTests();
         expect(tests).to.be.deep.equalInAnyOrder(testRepoStructure);
@@ -87,7 +87,7 @@ suite("TestthatAdapter", () => {
             } catch (e) {}
         }
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
-        testAdapter.tempFilePaths = new Set(["test-temp.R"]);
+        testAdapter.tempFilePaths = new Set(["test-temp1.R", "test-temp2.R", "test-temp3.R"]);
         testAdapter.testSuite = testRepoStructure;
         let testStatesRunningFlag = false;
         let testStatesErroredFlag = false;
@@ -111,7 +111,7 @@ suite("TestthatAdapter", () => {
         });
         (<any>testAdapter).isRunning = true;
         expect(testAdapter.runTests(["root"], "placeholder")).to.eventually.be.fulfilled;
-        await sleep(30000); // ensure events are fired
+        await sleep(45000); // ensure events are fired
         expect(testStatesRunningFlag).to.be.true;
         expect(testStatesErroredFlag).to.be.false;
         expect(testStatesFailedFlag).to.be.true;
@@ -129,7 +129,7 @@ suite("TestthatAdapter", () => {
             } catch (e) {}
         }
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
-        testAdapter.tempFilePaths = new Set(["test-temp.R"]);
+        testAdapter.tempFilePaths = new Set(["test-temp1.R", "test-temp2.R", "test-temp3.R"]);
         testAdapter.testSuite = testRepoStructure;
         let testStatesRunningFlag = false;
         let testStatesErroredFlag = false;
@@ -181,7 +181,7 @@ suite("TestthatAdapter", () => {
             } catch (e) {}
         }
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
-        testAdapter.tempFilePaths = new Set(["test-temp.R"]);
+        testAdapter.tempFilePaths = new Set(["test-temp1.R", "test-temp2.R", "test-temp3.R"]);
         testAdapter.testSuite = testRepoStructure;
         let testStatesRunningFlag = false;
         let testStatesErroredFlag = false;
@@ -233,7 +233,7 @@ suite("TestthatAdapter", () => {
             } catch (e) {}
         }
         let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
-        testAdapter.tempFilePaths = new Set(["test-temp.R"]);
+        testAdapter.tempFilePaths = new Set(["test-temp1.R", "test-temp2.R", "test-temp3.R"]);
         testAdapter.testSuite = testRepoStructure;
         let testStatesRunningFlag = false;
         let testStatesErroredFlag = false;

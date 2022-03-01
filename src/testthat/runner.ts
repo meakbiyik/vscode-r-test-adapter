@@ -35,8 +35,16 @@ export async function runSingleTestFile(
 ): Promise<string> {
     let cleanFilePath = filePath.replace(/\\/g, "/");
     let projectDirMatch = cleanFilePath.match(/(.+?)\/tests\/testthat.+?/i);
-    let devtoolsCall = `devtools::load_all('${testReporterPath}');devtools::test_active_file('${cleanFilePath}',reporter=VSCodeReporter)`;
     let RscriptCommand = await getRscriptCommand(adapter);
+    let { major, minor, patch } = await getDevtoolsVersion(RscriptCommand, adapter);
+    if (major < 2 || (major == 2 && minor < 3) || (major == 2 && minor == 3 && patch < 2)) {
+        return Promise.reject(
+            Error(`Devtools version too old. RTestAdapter requires devtools>=2.3.2
+            to be installed in the Rscript environment`)
+        );
+    }
+    let devtoolsMethod = major < 2 || (major == 2 && minor < 4) ? "test_active_file" : "test_file";
+    let devtoolsCall = `devtools::load_all('${testReporterPath}');devtools::${devtoolsMethod}('${cleanFilePath}',reporter=VSCodeReporter)`;
     let command = `${RscriptCommand} -e "${devtoolsCall}"`;
     let cwd = projectDirMatch
         ? projectDirMatch[1]
@@ -75,7 +83,7 @@ export async function runSingleTestFile(
             adapter.childProcess = undefined;
             stdout += childProcess.stderr.read();
             if (stdout.includes("Execution halted")) {
-                reject(stdout);
+                reject(Error(stdout));
             }
             resolve(stdout);
         });
@@ -174,17 +182,24 @@ async function getRscriptCommand(adapter: TestthatAdapter) {
     let config = vscode.workspace.getConfiguration("RTestAdapter");
     let configPath: string | undefined = config.get("RscriptPath");
     if (configPath !== undefined && configPath !== null) {
-        if ((<string>configPath).length > 0 && fs.existsSync(configPath))
+        if ((<string>configPath).length > 0 && fs.existsSync(configPath)) {
+            adapter.log.info(`Using Rscript in the configuration: ${configPath}`);
             return Promise.resolve(`"${configPath}"`);
-        else {
+        } else {
             adapter.log.warn(
                 `Rscript path given in the configuration ${configPath} is invalid. Falling back to defaults.`
             );
         }
     }
-    if (RscriptPath !== undefined) return Promise.resolve(`"${RscriptPath}"`);
+    if (RscriptPath !== undefined) {
+        adapter.log.info(`Using previously detected Rscript path: ${RscriptPath}`);
+        return Promise.resolve(`"${RscriptPath}"`);
+    }
     RscriptPath = await lookpath("Rscript");
-    if (RscriptPath !== undefined) return Promise.resolve(`"${RscriptPath}"`);
+    if (RscriptPath !== undefined) {
+        adapter.log.info(`Found Rscript in PATH: ${RscriptPath}`);
+        return Promise.resolve(`"${RscriptPath}"`);
+    }
     if (process.platform != "win32") {
         let candidates = ["/usr/bin", "/usr/local/bin"];
         for (const candidate of candidates) {
@@ -218,6 +233,38 @@ async function getRscriptCommand(adapter: TestthatAdapter) {
     throw Error("Rscript could not be found in PATH, cannot run the tests.");
 }
 
+async function getDevtoolsVersion(
+    RscriptCommand: string,
+    adapter: TestthatAdapter
+): Promise<{ major: number; minor: number; patch: number }> {
+    return new Promise(async (resolve, reject) => {
+        let childProcess = spawn(
+            `${RscriptCommand} -e "suppressMessages(library('devtools'));packageVersion('devtools')"`,
+            {
+                shell: true,
+            }
+        );
+        let stdout = "";
+        childProcess.once("exit", () => {
+            stdout += childProcess.stdout.read() + "\n" + childProcess.stderr.read();
+            let version = stdout.match(/(\d*)\.(\d*)\.(\d*)/i);
+            if (version !== null) {
+                adapter.log.info(`devtools version: ${version[0]}`);
+                const major = parseInt(version[1]);
+                const minor = parseInt(version[2]);
+                const patch = parseInt(version[3]);
+                resolve({ major, minor, patch });
+            } else {
+                reject(Error("devtools version could not be detected. Output:\n" + stdout));
+            }
+        });
+        childProcess.once("error", (err) => {
+            reject(err);
+        });
+    });
+}
+
 export const _unittestable = {
+    getDevtoolsVersion,
     getRscriptCommand,
 };

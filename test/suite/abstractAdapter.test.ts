@@ -65,7 +65,7 @@ suite("abstractAdapter", () => {
                 },
             });
         };
-        let tmpFileName = `test-temp.R`;
+        let tmpFileName = `test-temp1.R`;
         let testLoadStartedFiredFlag = false;
         let testLoadFinishedFiredFlag = false;
         testAdapter.testsEmitter.event((e) => {
@@ -98,7 +98,7 @@ suite("abstractAdapter", () => {
                 },
             });
         };
-        let tmpFileName = `test-temp.R`;
+        let tmpFileName = `test-temp2.R`;
         let tmpFilePath = path.normalize(path.join(testRepoTestsPath, tmpFileName));
         testAdapter.tempFilePaths.add(tmpFilePath);
         let testLoadStartedFiredFlag = false;

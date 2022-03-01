@@ -156,6 +156,14 @@ suite("TestthatRunner", () => {
         expect(runner._unittestable.getRscriptCommand(testAdapter)).to.eventually.be.fulfilled;
         testAdapter.dispose();
     });
+
+    test("devtools version can be found", async () => {
+        let testAdapter = new core.TestthatAdapter(workspaceFolder, log);
+        let RscriptCommand = await runner._unittestable.getRscriptCommand(testAdapter);
+        expect(runner._unittestable.getDevtoolsVersion(RscriptCommand, testAdapter)).to.eventually
+            .be.fulfilled;
+        testAdapter.dispose();
+    });
 });
 
 const memoize_node = <TestSuiteInfo>{
@@ -247,7 +255,11 @@ const email_node = <TestSuiteInfo>{
             children: [
                 <TestInfo>{
                     type: "test",
-                    id: encodeNodeId(path.join(testRepoTestsPath, "test-email.R"), "works", "Email address"),
+                    id: encodeNodeId(
+                        path.join(testRepoTestsPath, "test-email.R"),
+                        "works",
+                        "Email address"
+                    ),
                     label: "works",
                     file: path.join(testRepoTestsPath, "test-email.R"),
                     line: 16,

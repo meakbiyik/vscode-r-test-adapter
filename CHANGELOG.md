@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - xx.xx.xxxx
 ### Fixed
+- `test_active_files` is not available in `devtools` under version "2.4.0" (#12, #16)
 
 ## [0.5.2] - 01.03.2022
 ### Fixed

@@ -10,6 +10,8 @@ strategy:
   matrix:
     linux:
       imageName: 'ubuntu-latest'
+    linux-old-devtools:
+      imageName: 'ubuntu-latest'
     mac:
       imageName: 'macos-latest'
     windows:
@@ -43,6 +45,18 @@ steps:
     sudo Rscript -e "install.packages('mockery',repos = 'http://cran.us.r-project.org')"
   displayName: 'Install devtools for Linux'
   condition: eq(variables['Agent.OS'], 'Linux')
+
+- bash: |
+    sudo add-apt-repository ppa:cran/libgit2
+    sudo add-apt-repository ppa:c2d4u.team/c2d4u4.0+
+    sudo add-apt-repository ppa:marutter/rrutter
+    sudo add-apt-repository ppa:marutter/c2d4u
+    sudo apt-get update
+    sudo apt-get install libcurl4-gnutls-dev libssh2-1-dev libgit2-dev libxml2-dev
+    sudo Rscript -e "install.packages('devtools', repos = 'http://cran.us.r-project.org', version='2.3.2')"
+    sudo Rscript -e "install.packages('mockery', repos = 'http://cran.us.r-project.org')"
+  displayName: 'Install previous version of devtools for Linux'
+  condition: eq(variables['Agent.JobName'], 'Job linux-old-devtools')
 
 - bash: |
     Rscript -e "install.packages('devtools', repos = 'http://cran.us.r-project.org', type='binary');install.packages('mockery',repos = 'http://cran.us.r-project.org', type='binary')"
