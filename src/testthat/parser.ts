@@ -1,8 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { TestSuiteInfo, TestInfo } from "vscode-test-adapter-api";
-import { exec as _exec } from "child_process";
-import { RAdapter } from "../abstractAdapter";
+import { encodeNodeId } from "./util";
+import { TestingTools } from "../main";
 
 const wasmPath = path.join(__dirname, "..", "..", "..", "bin", "tree-sitter-r.wasm");
 const Parser = require("web-tree-sitter");
@@ -18,76 +17,56 @@ async function prepareParser(): Promise<any> {
 
 let parser = prepareParser();
 
-export async function parseTestsFromFile(
-    adapter: RAdapter,
-    uri: vscode.Uri
-): Promise<TestSuiteInfo> {
-    let test_suite: TestSuiteInfo = {
-        type: "suite",
-        id: uri.path,
-        label: uri.path.split("/").pop()!,
-        file: uri.fsPath,
-        children: [],
-    };
-
+async function parseTestsFromFile(
+    testingTools: TestingTools,
+    file: vscode.TestItem
+): Promise<void> {
+    let uri = file.uri!;
     let matches;
     try {
         matches = await findTests(uri);
     } catch (error) {
-        adapter.log.error(error);
-        return test_suite;
+        testingTools.log.error(error);
+        return;
     }
 
-    let subsuites = new Map();
+    let tests: Map<string, vscode.TestItem> = new Map();
     for (const match of matches) {
         if (match === undefined) continue;
-        let testStartLine = match.testStartLine;
-        let testLabel = match.testLabel;
+
+        let testItem = testingTools.controller.createTestItem(
+            encodeNodeId(uri.fsPath, match.testLabel, match.testSuperLabel),
+            match.testLabel,
+            uri
+        );
+        testItem.range = new vscode.Range(match.testStartPosition, match.testEndPosition);
+
         if (match.testSuperLabel === undefined) {
-            test_suite.children.push(<TestInfo>{
-                type: "test",
-                id: encodeNodeId(uri.fsPath, testLabel),
-                label: testLabel,
-                file: uri.fsPath,
-                line: testStartLine,
-            });
+            tests.set(match.testLabel, testItem);
         } else {
-            if (subsuites.has(match.testSuperLabel)) {
-                subsuites.get(match.testSuperLabel).children.push(<TestInfo>{
-                    type: "test",
-                    id: encodeNodeId(uri.fsPath, testLabel, match.testSuperLabel),
-                    label: testLabel,
-                    file: uri.fsPath,
-                    line: testStartLine,
-                });
+            if (tests.has(match.testSuperLabel)) {
+                tests.get(match.testSuperLabel)!.children.add(testItem);
             } else {
-                let new_subsuite = <TestSuiteInfo>{
-                    type: "suite",
-                    id: encodeNodeId(uri.fsPath, match.testSuperLabel),
-                    label: match.testSuperLabel,
-                    file: uri.fsPath,
-                    line: match.testSuperStartLine,
-                    children: [
-                        <TestInfo>{
-                            type: "test",
-                            id: encodeNodeId(uri.fsPath, testLabel, match.testSuperLabel),
-                            label: testLabel,
-                            file: uri.fsPath,
-                            line: testStartLine,
-                        },
-                    ],
-                };
-                subsuites.set(match.testSuperLabel, new_subsuite);
+                let supertestItem = testingTools.controller.createTestItem(
+                    encodeNodeId(uri.fsPath, match.testSuperLabel),
+                    match.testSuperLabel,
+                    uri
+                );
+                supertestItem.range = new vscode.Range(
+                    match.testSuperStartPosition,
+                    match.testSuperEndPosition
+                );
+                supertestItem.children.add(testItem);
+                tests.set(match.testSuperLabel, supertestItem);
             }
         }
     }
 
-    test_suite.children.push(...subsuites.values());
-
-    return Promise.resolve(test_suite);
+    file.children.replace([...tests.values()]);
+    return;
 }
 
-export async function findTests(uri: vscode.Uri) {
+async function findTests(uri: vscode.Uri) {
     const parserResolved = await parser;
     return vscode.workspace.openTextDocument(uri).then(
         (document: vscode.TextDocument) => {
@@ -149,9 +128,8 @@ export async function findTests(uri: vscode.Uri) {
                             1,
                             match.captures[2].node.text.length - 1
                         ),
-                        testStartLine: match.captures[0].node.startPosition.row,
-                        testStartIndex: match.captures[0].node.startIndex,
-                        testEndIndex: match.captures[0].node.endIndex,
+                        testStartPosition: match.captures[3].node.startPosition,
+                        testEndPosition: match.captures[3].node.endPosition,
                     });
                 } else {
                     matches.push({
@@ -159,16 +137,14 @@ export async function findTests(uri: vscode.Uri) {
                             1,
                             match.captures[2].node.text.length - 1
                         ),
-                        testSuperStartLine: match.captures[0].node.startPosition.row,
-                        testSuperStartIndex: match.captures[0].node.startIndex,
-                        testSuperEndIndex: match.captures[0].node.endIndex,
+                        testSuperStartPosition: match.captures[0].node.startPosition,
+                        testSuperEndPosition: match.captures[0].node.endPosition,
                         testLabel: match.captures[5].node.text.substring(
                             1,
                             match.captures[5].node.text.length - 1
                         ),
-                        testStartLine: match.captures[3].node.startPosition.row,
-                        testStartIndex: match.captures[3].node.startIndex,
-                        testEndIndex: match.captures[3].node.endIndex,
+                        testStartPosition: match.captures[3].node.startPosition,
+                        testEndPosition: match.captures[3].node.endPosition,
                     });
                 }
             }
@@ -181,18 +157,4 @@ export async function findTests(uri: vscode.Uri) {
     );
 }
 
-export function encodeNodeId(
-    filePath: string,
-    testLabel: string,
-    testSuperLabel: string | undefined = undefined
-) {
-    let normalizedFilePath = path.normalize(filePath);
-    normalizedFilePath = normalizedFilePath.replace(/^[\\\/]+|[\\\/]+$/g, "");
-    return testSuperLabel
-        ? `${normalizedFilePath}&${testSuperLabel}: ${testLabel}`
-        : `${normalizedFilePath}&${testLabel}`;
-}
-
-export const _unittestable = {
-    findTests,
-};
+export default parseTestsFromFile;
