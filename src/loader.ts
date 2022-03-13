@@ -1,10 +1,12 @@
 import * as vscode from "vscode";
 import testthatWatcherFactory from "./testthat/watcher";
 import testthatParser from "./testthat/parser";
-import { TestingTools } from "./main";
+import { ItemFramework, TestingTools } from "./util";
 
 const watcherFactories = [testthatWatcherFactory];
-const testParsers = [testthatParser];
+const testParsers: Record<ItemFramework, CallableFunction> = {
+    testthat: testthatParser,
+};
 
 async function discoverTestFiles(testingTools: TestingTools) {
     if (!vscode.workspace.workspaceFolders) {
@@ -27,11 +29,25 @@ async function discoverTestFiles(testingTools: TestingTools) {
 
 async function loadTestsFromFile(testingTools: TestingTools, test: vscode.TestItem) {
     testingTools.log.info(`Parsing test file ${test.uri}`);
-    return Promise.all(
-        testParsers.map(async (testParser) => {
-            testParser(testingTools, test);
-        })
-    );
+    const getFramework = (testItem: vscode.TestItem) =>
+        testingTools.testItemData.get(testItem)!.itemFramework;
+    const framework = getFramework(test);
+    testingTools.log.info(`Test file framework: ${framework}`);
+
+    let tests;
+    try {
+        test.busy = true;
+        tests = testParsers[framework](testingTools, test);
+        test.busy = false;
+    } catch (error) {
+        test.busy = false;
+        test.error = String(error);
+        testingTools.log.error(`Parsing test file errored with reason: ${error}`);
+        testingTools.log.error(error);
+        tests = undefined;
+    }
+
+    return tests;
 }
 
 export { discoverTestFiles, loadTestsFromFile };

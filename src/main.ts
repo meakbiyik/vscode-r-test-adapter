@@ -1,30 +1,19 @@
 import * as vscode from "vscode";
+import { ItemFramework, ItemType, TestingTools } from "./util";
 import { discoverTestFiles, loadTestsFromFile } from "./loader";
 import { Log } from "vscode-test-adapter-util";
 import { runHandler } from "./runner";
-
-export enum ItemType {
-    File,
-    TestCase,
-}
-export enum ItemFramework {
-    Testthat,
-}
-export interface TestingTools {
-    controller: vscode.TestController;
-    log: Log;
-    testItemData: WeakMap<vscode.TestItem, {
-        itemType: ItemType;
-        itemFramework: ItemFramework;
-    }>;
-}
 
 export async function activate(context: vscode.ExtensionContext) {
     const workspaceFolder = (vscode.workspace.workspaceFolders || [])[0];
 
     const controller = vscode.tests.createTestController("r-test-adapter", "R Test Adapter");
     const log = new Log("RTestAdapter", workspaceFolder, "R Test Adapter Log");
-    const testItemData = new WeakMap<vscode.TestItem, { itemType: ItemType; itemFramework: ItemFramework }>();
+    const testItemData = new WeakMap<
+        vscode.TestItem,
+        { itemType: ItemType; itemFramework: ItemFramework }
+    >();
+    const tempFilePaths: String[] = [];
 
     context.subscriptions.push(controller);
     context.subscriptions.push(log);
@@ -32,8 +21,9 @@ export async function activate(context: vscode.ExtensionContext) {
     const testingTools: TestingTools = {
         controller,
         log,
-        testItemData
-    }
+        testItemData,
+        tempFilePaths,
+    };
 
     // Custom handler for loading tests. The "test" argument here is undefined,
     // but if we supported lazy-loading child test then this could be called with

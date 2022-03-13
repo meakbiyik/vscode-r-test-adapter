@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import { encodeNodeId } from "./util";
-import { TestingTools } from "../main";
+import { ItemFramework, ItemType, TestingTools } from "../util";
 
 const wasmPath = path.join(__dirname, "..", "..", "..", "bin", "tree-sitter-r.wasm");
 const Parser = require("web-tree-sitter");
@@ -39,6 +39,10 @@ async function parseTestsFromFile(
             match.testLabel,
             uri
         );
+        testingTools.testItemData.set(testItem, {
+            itemType: ItemType.TestCase,
+            itemFramework: ItemFramework.Testthat,
+        });
         testItem.range = new vscode.Range(match.testStartPosition, match.testEndPosition);
 
         if (match.testSuperLabel === undefined) {
@@ -52,9 +56,13 @@ async function parseTestsFromFile(
                     match.testSuperLabel,
                     uri
                 );
+                testingTools.testItemData.set(supertestItem, {
+                    itemType: ItemType.TestCase,
+                    itemFramework: ItemFramework.Testthat,
+                });
                 supertestItem.range = new vscode.Range(
-                    match.testSuperStartPosition,
-                    match.testSuperEndPosition
+                    match.testSuperStartPosition!,
+                    match.testSuperEndPosition!
                 );
                 supertestItem.children.add(testItem);
                 tests.set(match.testSuperLabel, supertestItem);
@@ -117,6 +125,7 @@ async function findTests(uri: vscode.Uri) {
                 `
             );
             const raw_matches = query.matches(tree.rootNode);
+            const toVSCodePosition = (pos: any) => new vscode.Position(pos.row, pos.column);
 
             let matches = [];
 
@@ -128,8 +137,8 @@ async function findTests(uri: vscode.Uri) {
                             1,
                             match.captures[2].node.text.length - 1
                         ),
-                        testStartPosition: match.captures[3].node.startPosition,
-                        testEndPosition: match.captures[3].node.endPosition,
+                        testStartPosition: toVSCodePosition(match.captures[0].node.startPosition),
+                        testEndPosition: toVSCodePosition(match.captures[0].node.endPosition),
                     });
                 } else {
                     matches.push({
@@ -137,14 +146,16 @@ async function findTests(uri: vscode.Uri) {
                             1,
                             match.captures[2].node.text.length - 1
                         ),
-                        testSuperStartPosition: match.captures[0].node.startPosition,
-                        testSuperEndPosition: match.captures[0].node.endPosition,
+                        testSuperStartPosition: toVSCodePosition(
+                            match.captures[0].node.startPosition
+                        ),
+                        testSuperEndPosition: toVSCodePosition(match.captures[0].node.endPosition),
                         testLabel: match.captures[5].node.text.substring(
                             1,
                             match.captures[5].node.text.length - 1
                         ),
-                        testStartPosition: match.captures[3].node.startPosition,
-                        testEndPosition: match.captures[3].node.endPosition,
+                        testStartPosition: toVSCodePosition(match.captures[3].node.startPosition),
+                        testEndPosition: toVSCodePosition(match.captures[3].node.endPosition),
                     });
                 }
             }

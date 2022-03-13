@@ -38,17 +38,22 @@
     "watch": "tsc -w",
     "rebuild": "npm run clean && npm run build",
     "package": "vsce package",
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "esbuild-base": "esbuild ./src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
+    "esbuild": "npm run esbuild-base -- --sourcemap",
+    "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
     "publish": "vsce publish -p $VSCE_PAT",
     "deploy": "vsce publish -p $VSCE_PAT",
     "test": "node ./out/test/runTest.js",
-    "coverage": "nyc -x .vscode-test/ -a true -i source-map-support/register -r lcov -e .ts -x \"*.test.ts\" -x \"*.d.ts\" npm run test"
+    "coverage": "nyc -x .vscode-test/ -a true -i source-map-support/register -r lcov -e .ts -x \"*.test.ts\" -x \"*.d.ts\" npm run test",
+    "prepare": "husky install"
   },
   "dependencies": {
     "lookpath": "^1.2.2",
+    "minimatch": "^5.0.1",
     "split2": "^4.1.0",
     "tmp-promise": "^3.0.3",
     "uuid": "^8.3.2",
-    "vscode-test-adapter-api": "^1.9.0",
     "vscode-test-adapter-util": "^0.7.1",
     "web-tree-sitter": "^0.20.3",
     "winreg": "^1.2.4"
@@ -58,14 +63,23 @@
     "@types/chai-as-promised": "^7.1.5",
     "@types/deep-equal-in-any-order": "^1.0.1",
     "@types/glob": "^7.2.0",
+    "@types/minimatch": "^3.0.5",
     "@types/mocha": "^9.1.0",
     "@types/split2": "^3.2.1",
     "@types/uuid": "^8.3.4",
     "@types/vscode": "^1.64.0",
     "@types/winreg": "^1.2.31",
+    "@typescript-eslint/eslint-plugin": "^5.14.0",
+    "@typescript-eslint/parser": "^5.14.0",
     "chai": "^4.3.6",
     "chai-as-promised": "^7.1.1",
     "deep-equal-in-any-order": "^1.1.15",
+    "esbuild": "^0.14.25",
+    "eslint": "^8.11.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "husky": "^7.0.4",
+    "lint-staged": "^12.3.5",
     "mocha": "^9.2.1",
     "nyc": "^15.1.0",
     "prettier": "2.5.1",
@@ -77,21 +91,9 @@
   "engines": {
     "vscode": "^1.64.2"
   },
-  "extensionDependencies": [
-    "hbenl.vscode-test-explorer"
-  ],
   "activationEvents": [
     "onLanguage:r",
-    "onView:test-explorer",
-    "onCommand:test-explorer.reload",
-    "onCommand:test-explorer.run-all",
-    "onCommand:test-explorer.run-file",
-    "onCommand:test-explorer.run-test-at-cursor",
-    "onCommand:test-explorer.rerun",
-    "onCommand:test-explorer.debug-test-at-cursor",
-    "onCommand:test-explorer.redebug",
-    "onCommand:test-explorer.cancel",
-    "onStartupFinished"
+    "onView:test-explorer"
   ],
   "contributes": {
     "configuration": {
