@@ -23,6 +23,10 @@ export interface TestingTools {
     tempFilePaths: String[];
 }
 
+export interface TestParser {
+    (testingTools: TestingTools, file: vscode.TestItem): Promise<void>;
+}
+
 export interface TestRunner {
     (testingTools: TestingTools, run: vscode.TestRun, test: vscode.TestItem): Promise<string>;
 }

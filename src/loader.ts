@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
 import testthatWatcherFactory from "./testthat/watcher";
 import testthatParser from "./testthat/parser";
-import { ItemFramework, TestingTools } from "./util";
+import { ItemFramework, TestingTools, TestParser } from "./util";
 
 const watcherFactories = [testthatWatcherFactory];
-const testParsers: Record<ItemFramework, CallableFunction> = {
+const testParsers: Record<ItemFramework, TestParser> = {
     testthat: testthatParser,
 };
 
