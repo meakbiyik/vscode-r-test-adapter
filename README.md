@@ -9,4 +9,4 @@ This repository is a plug-in `Test Adapter` extension that works with the
 
 ## Requirements
 
-This extension expects `Rscript` to be in the path, or pointed with the `RTestAdapter.RscriptPath` setting, and requires `devtools`>=2.3.2 to be installed for the environment Rscript is connected to. No other dependencies are expected.
+This extension expects `Rscript` to be in the path, or pointed with the `RTestAdapter.RscriptPath` setting, and requires `devtools>=2.3.2` to be installed for the environment Rscript is connected to. No other dependencies are expected.
