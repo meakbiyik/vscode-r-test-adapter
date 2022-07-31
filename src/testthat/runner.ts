@@ -80,6 +80,7 @@ async function runSingleTestFile(
     let cwd = projectDirMatch
         ? projectDirMatch[1]
         : vscode.workspace.workspaceFolders![0].uri.fsPath;
+    testingTools.log.info(`Running test file in path ${filePath} in working directory ${cwd}`);
     return new Promise<string>(async (resolve, reject) => {
         let childProcess = spawn(command, { cwd, shell: true });
         let stdout = "";
