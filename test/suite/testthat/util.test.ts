@@ -5,7 +5,7 @@ suite("testthat/util", () => {
     test("Can create a unique and expressive NodeID", async () => {
         // Initialize some example paths
         const testPath = "../tests/testthat/test-email.R";
-        const testPath2 = "../tests/..\\test-email.R";
+        const testPath2 = "../tests/../test-email.R";
         const testPath3 = "C:\\Users\\test\\test-email.R";
         // Can normalize mixed paths
         expect(util.encodeNodeId(testPath, "test").replace(/[\\/]+/g, "/")).to.be.equal(
