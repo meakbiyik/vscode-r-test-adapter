@@ -379,3 +379,9 @@ async function getDevtoolsVersion(
 }
 
 export default runTest;
+
+const _unittestable = {
+    getRscriptCommand,
+    getDevtoolsVersion,
+};
+export { _unittestable };

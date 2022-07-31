@@ -169,3 +169,8 @@ async function findTests(uri: vscode.Uri) {
 }
 
 export default parseTestsFromFile;
+
+const _unittestable = {
+    findTests,
+};
+export { _unittestable };

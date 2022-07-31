@@ -58,4 +58,9 @@ function getOrCreateFile(testingTools: TestingTools, uri: vscode.Uri) {
     return file;
 }
 
+const _unittestable = {
+    getOrCreateFile,
+};
+
 export default testthatWatcherFactory;
+export { _unittestable };
