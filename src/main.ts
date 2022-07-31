@@ -1,30 +1,54 @@
 import * as vscode from "vscode";
-import { TestHub, testExplorerExtensionId } from "vscode-test-adapter-api";
-import { Log, TestAdapterRegistrar } from "vscode-test-adapter-util";
-import { TestthatAdapter } from "./testthat/adapter";
+import { ItemFramework, ItemType, TestingTools } from "./util";
+import { discoverTestFiles, loadTestsFromFile } from "./loader";
+import { Log } from "vscode-test-adapter-util";
+import { runHandler } from "./runner";
 
 export async function activate(context: vscode.ExtensionContext) {
     const workspaceFolder = (vscode.workspace.workspaceFolders || [])[0];
 
-    // create a simple logger that can be configured with the configuration variables
-    // `RTestAdapter.logpanel` and `RTestAdapter.logfile`
+    const controller = vscode.tests.createTestController("r-test-adapter", "R Test Adapter");
     const log = new Log("RTestAdapter", workspaceFolder, "R Test Adapter Log");
+    const testItemData = new WeakMap<
+        vscode.TestItem,
+        { itemType: ItemType; itemFramework: ItemFramework }
+    >();
+    const tempFilePaths: String[] = [];
+
+    context.subscriptions.push(controller);
     context.subscriptions.push(log);
 
-    // get the Test Explorer extension
-    const testExplorerExtension = vscode.extensions.getExtension<TestHub>(testExplorerExtensionId);
-    if (log.enabled) log.info(`Test Explorer ${testExplorerExtension ? "" : "not "}found`);
+    const testingTools: TestingTools = {
+        controller,
+        log,
+        testItemData,
+        tempFilePaths,
+    };
 
-    if (testExplorerExtension) {
-        const testHub = testExplorerExtension.exports;
+    // Custom handler for loading tests. The "test" argument here is undefined,
+    // but if we supported lazy-loading child test then this could be called with
+    // the test whose children VS Code wanted to load.
+    controller.resolveHandler = async (test) => {
+        if (!test) {
+            log.info("Discovering test files started.");
+            let watcherLists = await discoverTestFiles(testingTools);
+            for (const watchers of watcherLists) {
+                context.subscriptions.push(...watchers);
+            }
+            log.info("Discovering test files finished.");
+        } else {
+            await loadTestsFromFile(testingTools, test);
+        }
+    };
 
-        // this will register an RTestAdapter for each WorkspaceFolder
-        context.subscriptions.push(
-            new TestAdapterRegistrar(
-                testHub,
-                (workspaceFolder) => new TestthatAdapter(workspaceFolder, log),
-                log
-            )
-        );
-    }
+    // We'll create the "run" type profile here, and give it the function to call.
+    // You can also create debug and coverage profile types. The last `true` argument
+    // indicates that this should by the default "run" profile, in case there were
+    // multiple run profiles.
+    controller.createRunProfile(
+        "Run",
+        vscode.TestRunProfileKind.Run,
+        (request, token) => runHandler(testingTools, request, token),
+        true
+    );
 }

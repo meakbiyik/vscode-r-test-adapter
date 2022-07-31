@@ -1,7 +1,14 @@
-
-{  
-  "$schema": "http://json.schemastore.org/prettierrc",
-  "printWidth": 100,
-  "tabWidth": 4,
-  "useTabs": false
+{
+    "$schema": "http://json.schemastore.org/prettierrc",
+    "printWidth": 100,
+    "tabWidth": 4,
+    "useTabs": false,
+    "overrides": [
+        {
+            "files": "*.json",
+            "options": {
+                "tabWidth": 2
+            }
+        }
+    ]
 }
