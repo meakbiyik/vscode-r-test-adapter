@@ -48,7 +48,7 @@ suite("testthat/parser", () => {
         expect(tests.size).to.be.equal(3);
         let names: string[] = [];
         tests.forEach((test, collection) => {
-            const id = test.id.split("\\");
+            const id = test.id.replace(/[\\/]+/g, "/").split("/");
             names.push(id[id.length - 1]);
         });
         expect(names).to.be.deep.equalInAnyOrder([
