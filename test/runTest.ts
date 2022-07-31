@@ -10,7 +10,7 @@ async function main() {
     try {
         const extensionDevelopmentPath = path.resolve(__dirname, "../../");
         const extensionTestsPath = path.resolve(__dirname, "./suite/index");
-        const vscodeExecutablePath = await downloadAndUnzipVSCode("1.40.1");
+        const vscodeExecutablePath = await downloadAndUnzipVSCode("1.69.2");
         const testRepoPath = path.join(__dirname, "..", "..", "test", "testRepo");
         const cliPath = resolveCliPathFromVSCodeExecutablePath(vscodeExecutablePath);
 
