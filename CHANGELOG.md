@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD022 MD024 MD032 -->
+<!-- markdownlint-disable MD022 MD024 MD032 MD030 -->
 
 # Changelog
 
@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - xx.xx.xxxx
 
 ### Fixed
+
+## [0.6.1] - 14.01.2023
+
+### Fixed
+
+-   Some security vulnerabilities
 
 ## [0.6.0] - 31.07.2022
 
@@ -170,7 +176,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   Initial release of the VS Code R Test Explorer extension.
 -   Contains the infrastructure to parse and run R tests written with testthat framework.
 
-[unreleased]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.6.0...HEAD
+[unreleased]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.5.4...v0.6.0
 [0.5.4]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.5.2...v0.5.3
