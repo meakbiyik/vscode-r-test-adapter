@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - xx.xx.xxxx
 
+## [0.6.2] - 15.01.2023
+
+### Fixed
+
+-   Release pipeline issues
+
 ### Fixed
 
 ## [0.6.1] - 14.01.2023
@@ -176,7 +182,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   Initial release of the VS Code R Test Explorer extension.
 -   Contains the infrastructure to parse and run R tests written with testthat framework.
 
-[unreleased]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.6.1...HEAD
+[unreleased]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.5.4...v0.6.0
 [0.5.4]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.5.3...v0.5.4
