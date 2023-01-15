@@ -67,63 +67,63 @@ suite("testthat/parser", () => {
             {
                 testLabel: "Email address works",
                 testStartPosition: {
-                    _character: 0,
-                    _line: 3,
+                    e: 0,
+                    c: 3,
                 },
                 testEndPosition: {
-                    _character: 2,
-                    _line: 7,
+                    e: 2,
+                    c: 7,
                 },
             },
             {
                 testLabel: "EMAIL env var",
                 testStartPosition: {
-                    _character: 0,
-                    _line: 9,
+                    e: 0,
+                    c: 9,
                 },
                 testEndPosition: {
-                    _character: 2,
-                    _line: 13,
+                    e: 2,
+                    c: 13,
                 },
             },
             {
                 testSuperLabel: "Email address",
                 testLabel: "works",
                 testStartPosition: {
-                    _character: 2,
-                    _line: 16,
+                    e: 2,
+                    c: 16,
                 },
                 testEndPosition: {
-                    _character: 4,
-                    _line: 20,
+                    e: 4,
+                    c: 20,
                 },
                 testSuperStartPosition: {
-                    _character: 0,
-                    _line: 15,
+                    e: 0,
+                    c: 15,
                 },
                 testSuperEndPosition: {
-                    _character: 2,
-                    _line: 27,
+                    e: 2,
+                    c: 27,
                 },
             },
             {
                 testSuperLabel: "Email address",
                 testLabel: "got EMAIL env var",
                 testStartPosition: {
-                    _character: 2,
-                    _line: 22,
+                    e: 2,
+                    c: 22,
                 },
                 testEndPosition: {
-                    _character: 4,
-                    _line: 26,
+                    e: 4,
+                    c: 26,
                 },
                 testSuperStartPosition: {
-                    _character: 0,
-                    _line: 15,
+                    e: 0,
+                    c: 15,
                 },
                 testSuperEndPosition: {
-                    _character: 2,
-                    _line: 27,
+                    e: 2,
+                    c: 27,
                 },
             },
         ]);

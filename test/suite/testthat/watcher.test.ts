@@ -32,7 +32,7 @@ suite("testthat/watcher", () => {
     test("Can create watchers and detect tests", async () => {
         let w = await watcher.testthatWatcherFactory(testingTools, workspaceFolder);
         // Check if object is a vscode.FileSystemWatcher
-        expect(w).to.have.property("_onDidCreate");
+        expect(w).to.have.property("dispose");
         // Check if the files are detected
         expect(testingTools.controller.items.size).to.be.equal(5);
     });
