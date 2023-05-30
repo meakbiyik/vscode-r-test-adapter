@@ -89,7 +89,7 @@
     "vsce": "^2.6.7"
   },
   "engines": {
-    "vscode": "^1.64.2"
+    "vscode": "^1.78.1"
   },
   "activationEvents": [
     "onLanguage:r",
