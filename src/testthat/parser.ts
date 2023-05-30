@@ -86,8 +86,8 @@ async function findTests(uri: vscode.Uri) {
                         (identifier) @_function.name 
                         (namespace_get 
                             function: (identifier) @_function.name 
-                        ) (#eq? @_function.name "test_that")
-                    ]
+                        )
+                    ] (#eq? @_function.name "test_that")
                     arguments: 
                         (arguments 
                             value: (string) @label
