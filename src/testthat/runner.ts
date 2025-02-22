@@ -68,7 +68,7 @@ async function runSingleTestFile(
         return Promise.reject(
             Error(
                 "Devtools version too old. RTestAdapter requires devtools>=2.3.2" +
-                    "to be installed in the Rscript environment"
+                "to be installed in the Rscript environment"
             )
         );
     }
@@ -85,71 +85,84 @@ async function runSingleTestFile(
         let childProcess = spawn(command, { cwd, shell: true });
         let stdout = "";
         let testStartDates = new WeakMap<vscode.TestItem, number>();
-        childProcess.stdout!.pipe(split2(JSON.parse)).on("data", (data: TestResult) => {
-            stdout += JSON.stringify(data);
-            switch (data.type) {
-                case "start_test":
-                    if (data.test !== undefined) {
-                        let testItem = isSingleTest
-                            ? test
-                            : findTestRecursively(encodeNodeId(test.uri!.fsPath, data.test), test);
-                        if (testItem === undefined)
-                            reject(
-                                `Test with id ${encodeNodeId(
-                                    test.uri!.fsPath,
-                                    data.test
-                                )} could not be found. Please report this.`
-                            );
-                        testStartDates.set(testItem!, Date.now());
-                        run.started(testItem!);
-                    }
-                    break;
-                case "add_result":
-                    if (data.result !== undefined && data.test !== undefined) {
-                        let testItem = isSingleTest
-                            ? test
-                            : findTestRecursively(encodeNodeId(test.uri!.fsPath, data.test), test);
-                        if (testItem === undefined)
-                            reject(
-                                `Test with id ${encodeNodeId(
-                                    test.uri!.fsPath,
-                                    data.test
-                                )} could not be found. Please report this.`
-                            );
-                        let duration = Date.now() - testStartDates.get(testItem!)!;
-                        switch (data.result) {
-                            case "success":
-                            case "warning":
-                                run.passed(testItem!, duration);
-                                if (data.message) {
-                                    run.appendOutput(data.message, undefined, testItem);
-                                }
-                                break;
-                            case "failure":
-                                run.failed(
-                                    testItem!,
-                                    new vscode.TestMessage(data.message!),
-                                    duration
+        childProcess.stdout!.pipe(split2(
+            function (line: string) {
+                let parsedObject = null;
+                try {
+                    parsedObject = JSON.parse(line);
+                }
+                catch (e) {
+                    // What we just got is plain stdout from the tested code and not VSCodeReporter output
+                    stdout += line + "\r\n";
+                    return;
+                }
+                const data = parsedObject as TestResult;
+                if (data === null) {
+                    throw Error("Corrupt VSCodeReporter output: " + JSON.stringify(data));
+                }
+                switch (data.type) {
+                    case "start_test":
+                        if (data.test !== undefined) {
+                            let testItem = isSingleTest
+                                ? test
+                                : findTestRecursively(encodeNodeId(test.uri!.fsPath, data.test), test);
+                            if (testItem === undefined)
+                                reject(
+                                    `Test with id ${encodeNodeId(
+                                        test.uri!.fsPath,
+                                        data.test
+                                    )} could not be found. Please report this.`
                                 );
-                                break;
-                            case "skip":
-                                run.skipped(testItem!);
-                                if (data.message) {
-                                    run.appendOutput(data.message, undefined, testItem);
-                                }
-                                break;
-                            case "error":
-                                run.errored(
-                                    testItem!,
-                                    new vscode.TestMessage(data.message!),
-                                    duration
-                                );
-                                break;
+                            testStartDates.set(testItem!, Date.now());
+                            run.started(testItem!);
                         }
-                    }
-                    break;
-            }
-        });
+                        break;
+                    case "add_result":
+                        if (data.result !== undefined && data.test !== undefined) {
+                            let testItem = isSingleTest
+                                ? test
+                                : findTestRecursively(encodeNodeId(test.uri!.fsPath, data.test), test);
+                            if (testItem === undefined)
+                                reject(
+                                    `Test with id ${encodeNodeId(
+                                        test.uri!.fsPath,
+                                        data.test
+                                    )} could not be found. Please report this.`
+                                );
+                            let duration = Date.now() - testStartDates.get(testItem!)!;
+                            switch (data.result) {
+                                case "success":
+                                case "warning":
+                                    run.passed(testItem!, duration);
+                                    if (data.message) {
+                                        run.appendOutput(data.message, undefined, testItem);
+                                    }
+                                    break;
+                                case "failure":
+                                    run.failed(
+                                        testItem!,
+                                        new vscode.TestMessage(data.message!),
+                                        duration
+                                    );
+                                    break;
+                                case "skip":
+                                    run.skipped(testItem!);
+                                    if (data.message) {
+                                        run.appendOutput(data.message, undefined, testItem);
+                                    }
+                                    break;
+                                case "error":
+                                    run.errored(
+                                        testItem!,
+                                        new vscode.TestMessage(data.message!),
+                                        duration
+                                    );
+                                    break;
+                            }
+                        }
+                        break;
+                }
+            }));
         childProcess.once("exit", () => {
             stdout += childProcess.stderr.read();
             if (stdout.includes("Execution halted")) {
@@ -281,10 +294,12 @@ async function runSingleTest(
     return runSingleTestFile(testingTools, run, test, tmpFilePath, true)
         .catch(async (err) => {
             await tmpFileResult.cleanup();
+            run.appendOutput(err);
             throw err;
         })
         .then(async (value) => {
             await tmpFileResult.cleanup();
+            run.appendOutput(value);
             return value;
         });
 }
@@ -299,7 +314,7 @@ async function getRscriptCommand(testingTools: TestingTools) {
         } else {
             testingTools.log.warn(
                 `Rscript path given in the configuration ${configPath} is invalid. ` +
-                    `Falling back to defaults.`
+                `Falling back to defaults.`
             );
         }
     }
@@ -342,7 +357,7 @@ async function getRscriptCommand(testingTools: TestingTools) {
                 RscriptPath = possibleRscriptPath;
                 return Promise.resolve(`"${RscriptPath}"`);
             }
-        } catch (e) {}
+        } catch (e) { }
     }
     throw Error("Rscript could not be found in PATH, cannot run the tests.");
 }
@@ -354,7 +369,7 @@ async function getDevtoolsVersion(
     return new Promise(async (resolve, reject) => {
         let childProcess = spawn(
             `${RscriptCommand} -e "suppressMessages(library('devtools'));` +
-                `packageVersion('devtools')"`,
+            `packageVersion('devtools')"`,
             {
                 shell: true,
             }
