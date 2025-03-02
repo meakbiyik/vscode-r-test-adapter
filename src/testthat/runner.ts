@@ -97,6 +97,7 @@ async function runSingleTestFile(
                     return;
                 }
                 const data = parsedObject as TestResult;
+                stdout += JSON.stringify(data);
                 if (data === null) {
                     throw Error("Corrupt VSCodeReporter output: " + JSON.stringify(data));
                 }
