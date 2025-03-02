@@ -87,19 +87,17 @@ async function runSingleTestFile(
         let testStartDates = new WeakMap<vscode.TestItem, number>();
         childProcess.stdout!.pipe(split2(
             function (line: string) {
-                let parsedObject = null;
+                stdout += line + "\r\n";
                 try {
-                    parsedObject = JSON.parse(line);
+                    return JSON.parse(line);
                 }
                 catch (e) {
                     // What we just got is plain stdout from the tested code and not VSCodeReporter output
-                    stdout += line + "\r\n";
-                    return;
+                    return null;
                 }
-                const data = parsedObject as TestResult;
-                stdout += JSON.stringify(data);
+            })).on("data", function (data: TestResult | null) {
                 if (data === null) {
-                    throw Error("Corrupt VSCodeReporter output: " + JSON.stringify(data));
+                    return;
                 }
                 switch (data.type) {
                     case "start_test":
@@ -163,7 +161,7 @@ async function runSingleTestFile(
                         }
                         break;
                 }
-            }));
+            });
         childProcess.once("exit", () => {
             stdout += childProcess.stderr.read();
             if (stdout.includes("Execution halted")) {
