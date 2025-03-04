@@ -86,17 +86,16 @@ async function runSingleTestFile(
         let stdout = "";
         let testStartDates = new WeakMap<vscode.TestItem, number>();
         childProcess.stdout!.pipe(split2(
-            function (line: string) {
-                stdout += line + "\r\n";
+            function (line: string): (TestResult | string) {
                 try {
-                    return JSON.parse(line);
+                    return JSON.parse(line) as TestResult;
                 }
                 catch (e) {
-                    // What we just got is plain stdout from the tested code and not VSCodeReporter output
-                    return null;
+                    return line + "\r\n";
                 }
-            })).on("data", function (data: TestResult | null) {
-                if (data === null) {
+            })).on("data", function (data: TestResult | string) {
+                if (typeof data === "string") {
+                    run.appendOutput(data, undefined, test);
                     return;
                 }
                 switch (data.type) {
