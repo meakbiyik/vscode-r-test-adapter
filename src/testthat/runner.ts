@@ -94,6 +94,7 @@ async function runSingleTestFile(
                     return line + "\r\n";
                 }
             })).on("data", function (data: TestResult | string) {
+                stdout += JSON.stringify(data);
                 if (typeof data === "string") {
                     run.appendOutput(data, undefined, test);
                     return;
@@ -292,12 +293,10 @@ async function runSingleTest(
     return runSingleTestFile(testingTools, run, test, tmpFilePath, true)
         .catch(async (err) => {
             await tmpFileResult.cleanup();
-            run.appendOutput(err, undefined, test);
             throw err;
         })
         .then(async (value) => {
             await tmpFileResult.cleanup();
-            run.appendOutput(value, undefined, test);
             return value;
         });
 }
