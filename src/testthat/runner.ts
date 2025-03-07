@@ -292,7 +292,6 @@ async function runSingleTest(
     return runSingleTestFile(testingTools, run, test, tmpFilePath, true)
         .catch(async (err) => {
             await tmpFileResult.cleanup();
-            run.appendOutput(err, undefined, test);
             throw err;
         })
         .then(async (value) => {
