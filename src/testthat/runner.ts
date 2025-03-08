@@ -85,8 +85,19 @@ async function runSingleTestFile(
         let childProcess = spawn(command, { cwd, shell: true });
         let stdout = "";
         let testStartDates = new WeakMap<vscode.TestItem, number>();
-        childProcess.stdout!.pipe(split2(JSON.parse)).on("data", (data: TestResult) => {
+        childProcess.stdout!.pipe(
+            split2((line: string) => {
+              try {
+                return JSON.parse(line) as TestResult;
+              } catch {
+                return line + "\r\n";
+              }
+        })).on("data", function (data: TestResult | string) {
             stdout += JSON.stringify(data);
+            if (typeof data === "string") {
+                run.appendOutput(data, undefined, test);
+                return;
+            }
             switch (data.type) {
                 case "start_test":
                     if (data.test !== undefined) {

@@ -59,7 +59,7 @@ steps:
       condition: eq(variables['Agent.JobName'], 'Job linux-old-devtools')
 
     - bash: |
-          Rscript -e "install.packages('devtools', repos = 'http://cran.us.r-project.org', type='binary');install.packages('mockery',repos = 'http://cran.us.r-project.org', type='binary')"
+          Rscript -e "install.packages('devtools', repos = 'http://cran.us.r-project.org', type='binary');install.packages('mockery',repos = 'http://cran.us.r-project.org', type='binary');install.packages('httr',repos = 'http://cran.us.r-project.org', type='binary')"
       displayName: "Install devtools"
       condition: eq(variables['Agent.OS'], 'Windows_NT')
 
