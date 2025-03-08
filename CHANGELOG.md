@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased] - xx.xx.xxxx
 
+## [0.8.0] - 08.03.2025
+
+### Changed
+
+-   Stopped obfuscating stdout of tests (Thanks to @kubajal - resolves #30)
+
 ## [0.7.0] - 30.05.2023
 
 ### Changed
@@ -192,7 +198,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   Initial release of the VS Code R Test Explorer extension.
 -   Contains the infrastructure to parse and run R tests written with testthat framework.
 
-[unreleased]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.7.0...HEAD
+[unreleased]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.6.3...v0.7.0
 [0.6.3]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.6.1...v0.6.2
