@@ -36,6 +36,7 @@ suite("testthat/parser", () => {
         log,
         testItemData,
         tempFilePaths,
+        context: <vscode.ExtensionContext>{},
     };
 
     test("Tests are parsed from file", async () => {

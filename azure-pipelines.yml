@@ -9,9 +9,9 @@ trigger:
 strategy:
     matrix:
         linux:
-            imageName: "ubuntu-latest"
+            imageName: "ubuntu-22.04"
         linux-old-devtools:
-            imageName: "ubuntu-latest"
+            imageName: "ubuntu-22.04"
         # mac:
         #   imageName: 'macos-latest'
         windows:
@@ -23,7 +23,7 @@ pool:
 steps:
     - task: NodeTool@0
       inputs:
-          versionSpec: "16.x"
+          versionSpec: "20.x"
       displayName: "Install Node.js"
 
     - task: CmdLine@2

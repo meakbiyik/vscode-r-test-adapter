@@ -49,6 +49,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
+    "@vscode/debugadapter": "^1.68.0",
     "lookpath": "^1.2.2",
     "minimatch": "^9.0.1",
     "split2": "^4.2.0",

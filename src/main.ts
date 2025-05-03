@@ -23,6 +23,7 @@ export async function activate(context: vscode.ExtensionContext) {
         log,
         testItemData,
         tempFilePaths,
+        context
     };
 
     // Custom handler for loading tests. The "test" argument here is undefined,
@@ -49,6 +50,21 @@ export async function activate(context: vscode.ExtensionContext) {
         "Run",
         vscode.TestRunProfileKind.Run,
         (request, token) => runHandler(testingTools, request, token),
+        true
+    );
+
+    controller.createRunProfile(
+        "Debug",
+        vscode.TestRunProfileKind.Debug,
+        (request, token) => {
+            for (const test of request.include!) {
+                if (test.parent != undefined && test.parent.parent != undefined) {
+                    // FIXME: Implement running a single it(...) test when https://github.com/r-lib/testthat/pull/2077 is merged.
+                    vscode.window.showWarningMessage("Running a single it(...) test is not supported. Running the parent describe(...) suite. See documentation.");
+                }
+            };
+            runHandler(testingTools, request, token);
+        },
         true
     );
 }

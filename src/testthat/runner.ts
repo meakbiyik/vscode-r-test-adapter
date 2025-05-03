@@ -5,137 +5,124 @@ import * as fs from "fs";
 import * as tmp from "tmp-promise";
 import { spawn } from "child_process";
 import * as vscode from "vscode";
-import * as split2 from "split2";
 import { encodeNodeId } from "./util";
+import { DebugChannel, ProcessChannel } from "../streams"; // Adjust the path as needed
 import { ItemType, TestingTools } from "../util";
 import { appendFile as _appendFile } from "fs";
 import { lookpath } from "lookpath";
 import { TestResult } from "./reporter";
-import testthatParser from "./parser";
 import { v4 as uuid } from "uuid";
 
 const appendFile = util.promisify(_appendFile);
 const testReporterPath = path
     .join(__dirname, "..", "..", "..", "src", "testthat", "reporter")
     .replace(/\\/g, "/");
+const workspaceFolder = vscode.workspace.workspaceFolders![0].uri.fsPath
+    .replace(/\\/g, "/");
 let RscriptPath: string | undefined;
 
 async function runTest(
     testingTools: TestingTools,
     run: vscode.TestRun,
-    test: vscode.TestItem
+    test: vscode.TestItem,
+    isDebugMode: boolean = false
 ): Promise<string> {
     const getType = (testItem: vscode.TestItem) =>
         testingTools.testItemData.get(testItem)!.itemType;
 
-    switch (getType(test)) {
-        case ItemType.File:
-            testingTools.log.info("Test type is file");
-            // If we're running a file and don't know what it contains yet, parse it now
-            if (test.children.size === 0) {
-                testingTools.log.info("Children are not yet available. Parsing children.");
-                await testthatParser(testingTools, test);
-            }
-            // Run the file - it is faster than running tests one by one
-            testingTools.log.info("Run test file as a whole.");
-            return runSingleTestFile(testingTools, run, test, test.uri!.fsPath, false);
-        case ItemType.TestCase:
-            if (test.children.size === 0) {
-                testingTools.log.info("Test type is test case and a single test");
-                return runSingleTest(testingTools, run, test);
-            } else {
-                testingTools.log.info("Test type is test case and a describe suite");
-                return runDescribeTestSuite(testingTools, run, test);
-            }
-    }
+    let isWholeFile = getType(test) === ItemType.File;
+
+    const testRunId = uuid();
+    let tmpFileName = `test-${testRunId}.R`;
+    let tmpFilePath = path.normalize(path.join(path.dirname(test.uri!.fsPath), tmpFileName));
+    // Do not clean up tempFilePaths, not possible to get around the race condition
+    testingTools.tempFilePaths.push(tmpFilePath);
+    // cleanup is not guaranteed to unlink the file immediately
+    let tmpFileResult = await tmp.file({
+        name: tmpFileName,
+        tmpdir: path.dirname(test.uri!.fsPath),
+    });
+    const source = await getSource(testingTools, test, isDebugMode, isWholeFile);
+
+    await appendFile(tmpFilePath, source);
+
+    return executeTest(testingTools, run, test, tmpFilePath, isDebugMode)
+        .catch(async (err) => {
+            await tmpFileResult.cleanup();
+            throw err;
+        })
+        .then(async (value) => {
+            await tmpFileResult.cleanup();
+            return value;
+        });
 }
 
-async function runSingleTestFile(
+async function executeTest(
     testingTools: TestingTools,
     run: vscode.TestRun,
     test: vscode.TestItem,
     filePath: string,
-    isSingleTest: boolean
+    isDebugMode: boolean
 ): Promise<string> {
-    testingTools.log.info(
-        `Started running${isSingleTest ? " single" : ""} test file in path ${filePath}`
-    );
     let cleanFilePath = filePath.replace(/\\/g, "/");
-    let projectDirMatch = cleanFilePath.match(/(.+?)\/tests\/testthat.+?/i);
     let RscriptCommand = await getRscriptCommand(testingTools);
-    let { major, minor, patch } = await getDevtoolsVersion(testingTools, RscriptCommand);
-    if (major < 2 || (major == 2 && minor < 3) || (major == 2 && minor == 3 && patch < 2)) {
-        return Promise.reject(
-            Error(
-                "Devtools version too old. RTestAdapter requires devtools>=2.3.2" +
-                    "to be installed in the Rscript environment"
-            )
-        );
-    }
-    let devtoolsMethod = major == 2 && minor < 4 ? "test_file" : "test_active_file";
-    let devtoolsCall =
-        `devtools::load_all('${testReporterPath}');` +
-        `devtools::${devtoolsMethod}('${cleanFilePath}',reporter=VSCodeReporter)`;
-    let command = `${RscriptCommand} -e "${devtoolsCall}"`;
-    let cwd = projectDirMatch
-        ? projectDirMatch[1]
-        : vscode.workspace.workspaceFolders![0].uri.fsPath;
-    testingTools.log.info(`Running test file in path ${filePath} in working directory ${cwd}`);
-    return new Promise<string>(async (resolve, reject) => {
-        let childProcess = spawn(command, { cwd, shell: true });
-        let stdout = "";
-        let testStartDates = new WeakMap<vscode.TestItem, number>();
-        childProcess
-            .stdout!.pipe(
-                split2((line: string) => {
-                    try {
-                        return JSON.parse(line) as TestResult;
-                    } catch {
-                        return line + "\r\n";
-                    }
-                })
-            )
-            .on("data", function (data: TestResult | string) {
-                stdout += JSON.stringify(data);
-                if (typeof data === "string") {
-                    run.appendOutput(data, undefined, test);
-                    return;
-                }
+    let command = `${RscriptCommand} ${filePath}`;
+    let cwd = vscode.workspace.workspaceFolders![0];
+    let eventStream = isDebugMode ? new DebugChannel(testingTools, cwd, cleanFilePath) : new ProcessChannel(command);
+    let testStartDates = new WeakMap<vscode.TestItem, number>();
+    return new Promise<string>((resolve, reject) => {
+        let runOutput = "";
+
+        eventStream
+            .on("test_result", function (data: TestResult) {
+                runOutput += JSON.stringify(data) + "\n";
                 switch (data.type) {
                     case "start_test":
                         if (data.test !== undefined) {
-                            let testItem = isSingleTest
-                                ? test
-                                : findTestRecursively(
-                                      encodeNodeId(test.uri!.fsPath, data.test),
-                                      test
-                                  );
-                            if (testItem === undefined)
+                            let testItem: undefined | vscode.TestItem = findTestRecursively(
+                                encodeNodeId(test.uri!.fsPath, data.test),
+                                test
+                            ) ?? test;
+                            if (testItem === undefined) {
                                 reject(
                                     `Test with id ${encodeNodeId(
                                         test.uri!.fsPath,
                                         data.test
                                     )} could not be found. Please report this.`
                                 );
+                                break;
+                            }
+                            if (!testItem.id.includes(data.test)) {
+                                break;
+                            }
                             testStartDates.set(testItem!, Date.now());
                             run.started(testItem!);
                         }
                         break;
                     case "add_result":
                         if (data.result !== undefined && data.test !== undefined) {
-                            let testItem = isSingleTest
-                                ? test
-                                : findTestRecursively(
-                                      encodeNodeId(test.uri!.fsPath, data.test),
-                                      test
-                                  );
-                            if (testItem === undefined)
+                            let testItem: undefined | vscode.TestItem = findTestRecursively(
+                                encodeNodeId(test.uri!.fsPath, data.test),
+                                test
+                            ) ?? test;
+                            if (testItem === undefined) {
                                 reject(
                                     `Test with id ${encodeNodeId(
                                         test.uri!.fsPath,
                                         data.test
                                     )} could not be found. Please report this.`
                                 );
+                                break;
+                            }
+                            if (vscode.debug.activeDebugSession != undefined && !isDebugMode) {
+                                vscode.window.showWarningMessage("Got a debugging session while not in debug mode. " +
+                                    "Please report this.");
+                                break;
+                            }
+                            if (!testItem.id.includes(data.test)) {
+                                // Silently ignore the test result if the test item id does not match
+                                break;
+                            }
                             let duration = Date.now() - testStartDates.get(testItem!)!;
                             switch (data.result) {
                                 case "success":
@@ -169,17 +156,18 @@ async function runSingleTestFile(
                         }
                         break;
                 }
+            })
+            .on("end", () => {
+                if (runOutput.includes("Execution halted")) {
+                    reject(Error(runOutput));
+                }
+                run.end();
+                resolve(runOutput);
+            })
+            .on("error", () => {
+                run.end();
+                reject(Error(runOutput));
             });
-        childProcess.once("exit", () => {
-            stdout += childProcess.stderr.read();
-            if (stdout.includes("Execution halted")) {
-                reject(Error(stdout));
-            }
-            resolve(stdout);
-        });
-        childProcess.once("error", (err) => {
-            reject(err);
-        });
     });
 }
 
@@ -196,118 +184,86 @@ function findTestRecursively(testIdToFind: string, testToSearch: vscode.TestItem
     return testFound;
 }
 
-async function runDescribeTestSuite(
+async function getSource(
     testingTools: TestingTools,
-    run: vscode.TestRun,
-    test: vscode.TestItem
-) {
-    let documentUri = test.uri!;
-    let document = await vscode.workspace.openTextDocument(documentUri);
-    let source = document.getText();
+    test: vscode.TestItem,
+    isDebug: boolean = false,
+    isWholeFile: boolean) {
 
-    let testFileItem = testingTools.controller.items.get(test.uri!.path)!;
-    testFileItem.children.forEach((siblingTest: vscode.TestItem) => {
-        let testRange = siblingTest.range!;
-        let testStartIndex = document.offsetAt(testRange.start);
-        let testEndIndex = document.offsetAt(testRange.end);
-        if (siblingTest.id != test.id) {
-            source =
-                source.slice(0, testStartIndex) +
-                " ".repeat(testEndIndex - testStartIndex) +
-                source.slice(testEndIndex);
-        }
-    });
-    source = source.slice(0, document.offsetAt(test.range!.end));
+    let RscriptCommand = await getRscriptCommand(testingTools);
+    let { major, minor } = await getDevtoolsVersion(testingTools, RscriptCommand);
+    let devtoolsMethod = major == 2 && minor < 4 ? "test_file" : "test_active_file";
 
-    const testRunId = uuid();
-    let tmpFileName = `test-${testRunId}.R`;
-    let tmpFilePath = path.normalize(path.join(path.dirname(test.uri!.fsPath), tmpFileName));
-    // Do not clean up tempFilePaths, not possible to get around the race condition
-    testingTools.tempFilePaths.push(tmpFilePath);
-    // cleanup is not guaranteed to unlink the file immediately
-    let tmpFileResult = await tmp.file({
-        name: tmpFileName,
-        tmpdir: path.dirname(test.uri!.fsPath),
-    });
-    await appendFile(tmpFilePath, source);
-    return runSingleTestFile(testingTools, run, test, tmpFilePath, true)
-        .catch(async (err) => {
-            await tmpFileResult.cleanup();
-            throw err;
-        })
-        .then(async (value) => {
-            await tmpFileResult.cleanup();
-            return value;
-        });
-}
+    let isDescribe = false;
+    // This if statement sanitizes the 'test' argument.
+    // 1) for BDD style tests: retrieve the describe() expression, if the original test is an it(...) expression
+    // 2) for testthat tests:  does nothing
+    if (test.parent != undefined && test.parent.parent != undefined) {
+        test = test.parent;
+        isDescribe = true;
+    }
+    const testLabel = test?.label;
+    const testPath = test?.uri!.fsPath
+        .replace(/\\/g, "/");
 
-async function runSingleTest(
-    testingTools: TestingTools,
-    run: vscode.TestRun,
-    test: vscode.TestItem
-) {
-    let documentUri = test.uri!;
-    let document = await vscode.workspace.openTextDocument(documentUri);
-    let source = document.getText();
+    return `
+# NOTE! This file has been generated automatically. Modification has no effect.
+# Entry point for the '${test.id}' test...
 
-    let parentTest: vscode.TestItem | undefined;
-    let testFileItem = testingTools.controller.items.get(test.uri!.path)!;
-    testFileItem.children.forEach((siblingTest: vscode.TestItem) => {
-        let testRange = siblingTest.range!;
-        let testStartIndex = document.offsetAt(testRange.start);
-        let testEndIndex = document.offsetAt(testRange.end);
-        if (siblingTest.id != test.id) {
-            if (siblingTest.children.get(test.id) !== undefined) {
-                // Handle tests inside describe test suites
-                parentTest = siblingTest;
-                siblingTest.children.forEach((closeSiblingTest: vscode.TestItem) => {
-                    if (closeSiblingTest.id != test.id) {
-                        testRange = closeSiblingTest.range!;
-                        testStartIndex = document.offsetAt(testRange.start);
-                        testEndIndex = document.offsetAt(testRange.end);
-                        source =
-                            source.slice(0, testStartIndex) +
-                            " ".repeat(testEndIndex - testStartIndex) +
-                            source.slice(testEndIndex!);
-                    }
-                });
-            } else {
-                source =
-                    source.slice(0, testStartIndex) +
-                    " ".repeat(testEndIndex - testStartIndex) +
-                    source.slice(testEndIndex!);
+TEST_THAT <- "test_that"
+DESCRIBE <- "describe"
+IS_DESCRIBE <- ${Number(isDescribe)}
+IS_DEBUG <- ${Number(isDebug)}
+IS_WHOLE_FILE_TEST <- ${Number(isWholeFile)}
+
+testthat <- loadNamespace('testthat')
+new_describe <- function(...) { }
+new_test_that <- function(...) { }
+
+if (!IS_WHOLE_FILE_TEST) {
+    if (IS_DESCRIBE) {
+        orig_describe <- testthat::describe
+        new_describe <- function(desc, ...) {
+            if ('${testLabel}' == desc) {
+                orig_describe(desc, ...)
             }
         }
-    });
-    let lastIndex;
-    if (parentTest !== undefined) {
-        lastIndex = document.offsetAt(parentTest.range!.end);
-    } else {
-        lastIndex = document.offsetAt(test.range!.end);
-    }
-    source = source.slice(0, lastIndex);
 
-    const testRunId = uuid();
-    let tmpFileName = `test-${testRunId}.R`;
-    let tmpFilePath = path.normalize(path.join(path.dirname(test.uri!.fsPath), tmpFileName));
-    // Do not clean up tempFilePaths, not possible to get around the race condition
-    testingTools.tempFilePaths.push(tmpFilePath);
-    // cleanup is not guaranteed to unlink the file immediately
-    let tmpFileResult = await tmp.file({
-        name: tmpFileName,
-        tmpdir: path.dirname(test.uri!.fsPath),
-    });
-    await appendFile(tmpFilePath, source);
-    return runSingleTestFile(testingTools, run, test, tmpFilePath, true)
-        .catch(async (err) => {
-            await tmpFileResult.cleanup();
-            throw err;
-        })
-        .then(async (value) => {
-            await tmpFileResult.cleanup();
-            return value;
-        });
+    } else {
+        orig_test_that <- testthat::test_that
+        new_test_that <- function(desc, ...) {
+            if ('${testLabel}' == desc) {
+                orig_test_that(desc, ...)
+            }
+        }
+    }
+
+    unlockBinding(DESCRIBE, testthat)
+    assignInNamespace(DESCRIBE, new_describe, ns = 'testthat')
+    assign(DESCRIBE, new_describe, envir = .GlobalEnv)
+    lockBinding(DESCRIBE, testthat)
+
+    unlockBinding(TEST_THAT, testthat)
+    assignInNamespace(TEST_THAT, new_test_that, ns = 'testthat')
+    assign(TEST_THAT, new_test_that, envir = .GlobalEnv)
+    lockBinding(TEST_THAT, testthat)
+
 }
+
+library(devtools)
+devtools::load_all('${testReporterPath}')
+if (IS_DEBUG) {
+    .vsc.load_all('${workspaceFolder}')
+    with_reporter(VSCodeReporter, {
+        .vsc.debugSource('${testPath}')
+    })
+} else {
+    devtools::load_all('${workspaceFolder}')
+    devtools::${devtoolsMethod}('${testPath}', reporter=VSCodeReporter)
+}
+`;
+}
+
 
 async function getRscriptCommand(testingTools: TestingTools) {
     let config = vscode.workspace.getConfiguration("RTestAdapter");
@@ -319,7 +275,7 @@ async function getRscriptCommand(testingTools: TestingTools) {
         } else {
             testingTools.log.warn(
                 `Rscript path given in the configuration ${configPath} is invalid. ` +
-                    `Falling back to defaults.`
+                `Falling back to defaults.`
             );
         }
     }
@@ -362,7 +318,7 @@ async function getRscriptCommand(testingTools: TestingTools) {
                 RscriptPath = possibleRscriptPath;
                 return Promise.resolve(`"${RscriptPath}"`);
             }
-        } catch (e) {}
+        } catch (e) { }
     }
     throw Error("Rscript could not be found in PATH, cannot run the tests.");
 }
@@ -374,12 +330,13 @@ async function getDevtoolsVersion(
     return new Promise(async (resolve, reject) => {
         let childProcess = spawn(
             `${RscriptCommand} -e "suppressMessages(library('devtools'));` +
-                `packageVersion('devtools')"`,
+            `packageVersion('devtools')"`,
             {
                 shell: true,
             }
         );
         let stdout = "";
+        vscode
         childProcess.once("exit", () => {
             stdout += childProcess.stdout.read() + "\n" + childProcess.stderr.read();
             let version = stdout.match(/(\d*)\.(\d*)\.(\d*)/i);

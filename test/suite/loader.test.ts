@@ -28,6 +28,7 @@ suite("loader", () => {
         log,
         testItemData,
         tempFilePaths,
+        context: <vscode.ExtensionContext>{},
     };
 
     test("Can discover test files and create watchers", async () => {
