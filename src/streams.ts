@@ -20,12 +20,14 @@ function* parseTestResults(
     }
 }
 
+// This EventEmitter emits test results in the plain 'Run test' scenario.
 export class ProcessChannel extends EventEmitter {
 
-    constructor(cmd: string) {
+    constructor(cmd: string, cwd: vscode.WorkspaceFolder) {
         super();
-        let child = spawn(cmd, { shell: true });
+        let child = spawn(cmd, { cwd: cwd.uri.fsPath, shell: true });
         child.stdout.setEncoding("utf8");
+        child.stderr.setEncoding("utf8");
 
         child.stdout.on('data', (data: string) => {
             for (const testResult of parseTestResults(data)) {
@@ -42,6 +44,7 @@ export class ProcessChannel extends EventEmitter {
 
 }
 
+// A helper class for intercepting the DAP messages.
 class DebuggerTracker implements vscode.DebugAdapterTracker {
 
     channel: DebugChannel;
@@ -68,9 +71,13 @@ class DebuggerTracker implements vscode.DebugAdapterTracker {
     }
 }
 
+// This EventEmitter emits test results in the 'Debug test' scenario.
+// The difference from ProcessChannel is that it intercepts the DAP messages instead of
+// parsing the stdout of the R process under debugging. This is necessary because
+// VSCode API doesn't easily expose the stdout of the R process under debugging.
 export class DebugChannel extends EventEmitter {
 
-    constructor(testingTools: TestingTools, folder: vscode.WorkspaceFolder, cleanFilePath: string) {
+    constructor(testingTools: TestingTools, folder: vscode.WorkspaceFolder, RFilePath: string) {
         super();
         const channel = this;
 
@@ -84,7 +91,7 @@ export class DebugChannel extends EventEmitter {
             name: 'Launch R File',
             request: 'launch',
             debugMode: 'file',
-            file: cleanFilePath,
+            file: RFilePath,
             allowGlobalDebugging: false
         };
 

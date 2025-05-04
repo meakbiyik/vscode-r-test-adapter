@@ -68,7 +68,7 @@ async function executeTest(
     let RscriptCommand = await getRscriptCommand(testingTools);
     let command = `${RscriptCommand} ${filePath}`;
     let cwd = vscode.workspace.workspaceFolders![0];
-    let eventStream = isDebugMode ? new DebugChannel(testingTools, cwd, cleanFilePath) : new ProcessChannel(command);
+    let eventStream = isDebugMode ? new DebugChannel(testingTools, cwd, cleanFilePath) : new ProcessChannel(command, cwd);
     let testStartDates = new WeakMap<vscode.TestItem, number>();
     return new Promise<string>((resolve, reject) => {
         let runOutput = "";
@@ -196,8 +196,8 @@ async function getSource(
 
     let isDescribe = false;
     // This if statement sanitizes the 'test' argument.
-    // 1) for BDD style tests: retrieve the describe() expression, if the original test is an it(...) expression
-    // 2) for testthat tests:  does nothing
+    // 1) for describe(...) tests: retrieve the describe() expression, if the original test is an it(...) expression
+    // 2) for test_that(...) tests:  does nothing
     if (test.parent != undefined && test.parent.parent != undefined) {
         test = test.parent;
         isDescribe = true;
