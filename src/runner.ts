@@ -24,12 +24,14 @@ async function runHandler(
     request: vscode.TestRunRequest,
     token: vscode.CancellationToken
 ) {
+    // Check if the R Debugger extension is enabled when running in debug mode.
     const isDebugMode = request.profile?.kind === vscode.TestRunProfileKind.Debug;
     const isDebuggerEnabled = isExtensionEnabled(R_DEBUGGER_EXTENSION_ID);
     if (isDebugMode && !isDebuggerEnabled) {
         vscode.window.showErrorMessage("R Debugger extension is not enabled. Please install and enable it to use the R test debug mode.");
         return;
     }
+
     testingTools.log.info("Test run started.");
     const run = testingTools.controller.createTestRun(request);
     const queue: vscode.TestItem[] = [];

@@ -42,7 +42,7 @@ async function runTest(
         name: tmpFileName,
         tmpdir: path.dirname(test.uri!.fsPath),
     });
-    const source = await getSource(testingTools, test, isDebugMode, isWholeFile);
+    const source = await getEntryPointSource(testingTools, test, isDebugMode, isWholeFile);
 
     await appendFile(tmpFilePath, source);
 
@@ -68,7 +68,11 @@ async function executeTest(
     let RscriptCommand = await getRscriptCommand(testingTools);
     let command = `${RscriptCommand} ${filePath}`;
     let cwd = vscode.workspace.workspaceFolders![0];
+
+    // Use DebugChannel for debug mode to capture detailed debugging information,
+    // and ProcessChannel for normal mode to execute the test script as a subprocess.
     let eventStream = isDebugMode ? new DebugChannel(testingTools, cwd, cleanFilePath) : new ProcessChannel(command, cwd);
+
     let testStartDates = new WeakMap<vscode.TestItem, number>();
     return new Promise<string>((resolve, reject) => {
         let runOutput = "";
@@ -184,7 +188,11 @@ function findTestRecursively(testIdToFind: string, testToSearch: vscode.TestItem
     return testFound;
 }
 
-async function getSource(
+// This function returns the 'entry point' for the R test.
+// The entry point hacks the testthat package to disable any other test.
+// This way the user has a seamless experience when running the test
+// both in the normal and debug mode.
+async function getEntryPointSource(
     testingTools: TestingTools,
     test: vscode.TestItem,
     isDebug: boolean = false,
