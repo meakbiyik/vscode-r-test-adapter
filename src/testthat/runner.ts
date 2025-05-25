@@ -13,6 +13,11 @@ import { lookpath } from "lookpath";
 import { TestResult } from "./reporter";
 import { v4 as uuid } from "uuid";
 
+const ANSI = {
+    reset: '\x1b[0m',
+    red: '\x1b[31m',
+};
+
 const appendFile = util.promisify(_appendFile);
 const testReporterPath = path
     .join(__dirname, "..", "..", "..", "src", "testthat", "reporter")
@@ -31,9 +36,10 @@ async function runTest(
         testingTools.testItemData.get(testItem)!.itemType;
 
     let isWholeFile = getType(test) === ItemType.File;
+    const source = await getEntryPointSource(testingTools, test, isDebugMode, isWholeFile);
 
     const testRunId = uuid();
-    let tmpFileName = `test-${testRunId}.R`;
+    let tmpFileName = `test-${testRunId}.loader`;
     let tmpFilePath = path.normalize(path.join(path.dirname(test.uri!.fsPath), tmpFileName));
     // Do not clean up tempFilePaths, not possible to get around the race condition
     testingTools.tempFilePaths.push(tmpFilePath);
@@ -42,7 +48,6 @@ async function runTest(
         name: tmpFileName,
         tmpdir: path.dirname(test.uri!.fsPath),
     });
-    const source = await getEntryPointSource(testingTools, test, isDebugMode, isWholeFile);
 
     await appendFile(tmpFilePath, source);
 
@@ -78,6 +83,14 @@ async function executeTest(
         let runOutput = "";
 
         eventStream
+            .on("stdout", function (line: string) {
+                runOutput += line + "\r\n";
+                run.appendOutput(line + "\r\n");
+            })
+            .on("stderr", function (line: string) {
+                runOutput += `${ANSI.red}${line}${ANSI.reset}\r\n`;
+                run.appendOutput(`${ANSI.red}${line}${ANSI.reset}\r\n`);
+            })
             .on("test_result", function (data: TestResult) {
                 runOutput += JSON.stringify(data) + "\n";
                 switch (data.type) {
@@ -165,12 +178,10 @@ async function executeTest(
                 if (runOutput.includes("Execution halted")) {
                     reject(Error(runOutput));
                 }
-                run.end();
                 resolve(runOutput);
             })
             .on("error", () => {
-                run.end();
-                reject(Error(runOutput));
+                reject(runOutput);
             });
     });
 }
@@ -199,7 +210,15 @@ async function getEntryPointSource(
     isWholeFile: boolean) {
 
     let RscriptCommand = await getRscriptCommand(testingTools);
-    let { major, minor } = await getDevtoolsVersion(testingTools, RscriptCommand);
+    let { major, minor, patch } = await getDevtoolsVersion(testingTools, RscriptCommand);
+    if (major < 2 || (major == 2 && minor < 3) || (major == 2 && minor == 3 && patch < 2)) {
+        return Promise.reject(
+            Error(
+                "Devtools version too old. RTestAdapter requires devtools>=2.3.2" +
+                "to be installed in the Rscript environment"
+            )
+        );
+    };
     let devtoolsMethod = major == 2 && minor < 4 ? "test_file" : "test_active_file";
 
     let isDescribe = false;
@@ -215,8 +234,13 @@ async function getEntryPointSource(
         .replace(/\\/g, "/");
 
     return `
-# NOTE! This file has been generated automatically. Modification has no effect.
-# Entry point for the '${test.id}' test...
+# NOTE! This file has been generated automatically by the VSCode R Test Adapter. Modification has no effect.
+
+# This file modifies the original behavior of the testthat::test_that and testthat::describe methods
+# such that they trigger only the tests specified by the 'desc' argument.
+# Please report any unwanted effects at https://github.com/meakbiyik/vscode-r-test-adapter/issues.
+
+# Entry point for the '${test.id}' test follows...
 
 TEST_THAT <- "test_that"
 DESCRIBE <- "describe"

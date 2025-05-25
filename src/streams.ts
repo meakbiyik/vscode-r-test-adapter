@@ -5,17 +5,18 @@ import { TestingTools } from './util';
 import { DebugProtocol } from '@vscode/debugprotocol';
 import { TestResult } from './testthat/reporter';
 
-function* parseTestResults(
-    chunk: string
-): Generator<TestResult, void, void> {
+function* parseChunk(
+    chunk: string,
+    streamName: string = "stdout"
+): Generator<any, void, void> {
     for (const line of chunk.split('\n')) {
         try {
             const data = JSON.parse(line) as TestResult;
             if (data) {
-                yield data;
+                yield ["test_result", data];
             }
         } catch {
-            /* ignore non‑TestResult lines */
+            yield [streamName, line];
         }
     }
 }
@@ -29,16 +30,26 @@ export class ProcessChannel extends EventEmitter {
         child.stdout.setEncoding("utf8");
         child.stderr.setEncoding("utf8");
 
-        child.stdout.on('data', (data: string) => {
-            for (const testResult of parseTestResults(data)) {
-                this.emit('test_result', testResult);
+        child.stdout.on('data', (chunk: string) => {
+            for (const [eventName, data] of parseChunk(chunk)) {
+                this.emit(eventName, data);
+            }
+        })
+        child.stderr.on('data', (chunk: string) => {
+            for (const line of chunk.split("\n")) {
+                this.emit("stderr", line);
             }
         })
         child.once('error', (err: Error) => {
             this.emit('error', err);
         })
         child.once('exit', (code: number) => {
-            this.emit('end');
+            if (code != 0) {
+                this.emit('error');
+            }
+            else {
+                this.emit('end');
+            }
         });
     }
 
@@ -53,19 +64,25 @@ class DebuggerTracker implements vscode.DebugAdapterTracker {
         this.channel = channel;
     }
 
+    onWillStopSession(): void {
+        this.channel.emit('end');
+    }
+
     onDidSendMessage(message: DebugProtocol.ProtocolMessage) {
         if (message.type === 'event') {
             const event = message as DebugProtocol.Event;
             if (event.event === 'output') {
                 const outputEvent = event as DebugProtocol.OutputEvent;
                 if (outputEvent.body.category === 'stdout') {
-                    for (const testResult of parseTestResults(outputEvent.body.output)) {
-                        this.channel.emit('test_result', testResult);
+                    for (const [eventName, data] of parseChunk(outputEvent.body.output)) {
+                        this.channel.emit(eventName, data);
                     }
                 }
-            }
-            if (event.event === 'exited') {
-                this.channel.emit('end');
+                if (outputEvent.body.category === 'stderr') {
+                    for (const line of outputEvent.body.output.split("\n")) {
+                        this.channel.emit("stderr", line);
+                    }
+                }
             }
         }
     }
