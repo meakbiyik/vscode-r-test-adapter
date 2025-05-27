@@ -4,6 +4,11 @@
 \alias{VSCodeReporter}
 \title{Test reporter: VS Code format.}
 \description{
+Test reporter: VS Code format.
+
+Test reporter: VS Code format.
+}
+\details{
 This reporter will output results in a format understood by the
 \href{https://github.com/meakbiyik/vscode-r-test-adapter}{R Test Explorer}.
 }
@@ -13,118 +18,177 @@ This reporter will output results in a format understood by the
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{VSCodeReporter$new()}}
-\item \href{#method-start_reporter}{\code{VSCodeReporter$start_reporter()}}
-\item \href{#method-start_file}{\code{VSCodeReporter$start_file()}}
-\item \href{#method-start_test}{\code{VSCodeReporter$start_test()}}
-\item \href{#method-add_result}{\code{VSCodeReporter$add_result()}}
-\item \href{#method-end_test}{\code{VSCodeReporter$end_test()}}
-\item \href{#method-end_file}{\code{VSCodeReporter$end_file()}}
-\item \href{#method-end_reporter}{\code{VSCodeReporter$end_reporter()}}
-\item \href{#method-cat_json}{\code{VSCodeReporter$cat_json()}}
-\item \href{#method-clone}{\code{VSCodeReporter$clone()}}
+\item \href{#method-VSCodeReporter-new}{\code{VSCodeReporter$new()}}
+\item \href{#method-VSCodeReporter-start_reporter}{\code{VSCodeReporter$start_reporter()}}
+\item \href{#method-VSCodeReporter-start_file}{\code{VSCodeReporter$start_file()}}
+\item \href{#method-VSCodeReporter-start_test}{\code{VSCodeReporter$start_test()}}
+\item \href{#method-VSCodeReporter-add_result}{\code{VSCodeReporter$add_result()}}
+\item \href{#method-VSCodeReporter-end_test}{\code{VSCodeReporter$end_test()}}
+\item \href{#method-VSCodeReporter-end_file}{\code{VSCodeReporter$end_file()}}
+\item \href{#method-VSCodeReporter-end_reporter}{\code{VSCodeReporter$end_reporter()}}
+\item \href{#method-VSCodeReporter-cat_json}{\code{VSCodeReporter$cat_json()}}
+\item \href{#method-VSCodeReporter-clone}{\code{VSCodeReporter$clone()}}
 }
 }
-\if{html}{
-\out{<details ><summary>Inherited methods</summary>}
-\itemize{
-\item \out{<span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id=".start_context">}\href{../../testthat/html/Reporter.html#method-.start_context}{\code{testthat::Reporter$.start_context()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="cat_line">}\href{../../testthat/html/Reporter.html#method-cat_line}{\code{testthat::Reporter$cat_line()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="cat_tight">}\href{../../testthat/html/Reporter.html#method-cat_tight}{\code{testthat::Reporter$cat_tight()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="end_context">}\href{../../testthat/html/Reporter.html#method-end_context}{\code{testthat::Reporter$end_context()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="end_context_if_started">}\href{../../testthat/html/Reporter.html#method-end_context_if_started}{\code{testthat::Reporter$end_context_if_started()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="is_full">}\href{../../testthat/html/Reporter.html#method-is_full}{\code{testthat::Reporter$is_full()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="local_user_output">}\href{../../testthat/html/Reporter.html#method-local_user_output}{\code{testthat::Reporter$local_user_output()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="rule">}\href{../../testthat/html/Reporter.html#method-rule}{\code{testthat::Reporter$rule()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="start_context">}\href{../../testthat/html/Reporter.html#method-start_context}{\code{testthat::Reporter$start_context()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="update">}\href{../../testthat/html/Reporter.html#method-update}{\code{testthat::Reporter$update()}}\out{</span>}
-}
-\out{</details>}
-}
+\if{html}{\out{
+<details><summary>Inherited methods</summary>
+<ul>
+<li><span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id=".start_context"><a href='../../testthat/html/Reporter.html#method-Reporter-.start_context'><code>testthat::Reporter$.start_context()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="cat_line"><a href='../../testthat/html/Reporter.html#method-Reporter-cat_line'><code>testthat::Reporter$cat_line()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="cat_tight"><a href='../../testthat/html/Reporter.html#method-Reporter-cat_tight'><code>testthat::Reporter$cat_tight()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="end_context"><a href='../../testthat/html/Reporter.html#method-Reporter-end_context'><code>testthat::Reporter$end_context()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="end_context_if_started"><a href='../../testthat/html/Reporter.html#method-Reporter-end_context_if_started'><code>testthat::Reporter$end_context_if_started()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="is_full"><a href='../../testthat/html/Reporter.html#method-Reporter-is_full'><code>testthat::Reporter$is_full()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="local_user_output"><a href='../../testthat/html/Reporter.html#method-Reporter-local_user_output'><code>testthat::Reporter$local_user_output()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="rule"><a href='../../testthat/html/Reporter.html#method-Reporter-rule'><code>testthat::Reporter$rule()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="start_context"><a href='../../testthat/html/Reporter.html#method-Reporter-start_context'><code>testthat::Reporter$start_context()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="testthat" data-topic="Reporter" data-id="update"><a href='../../testthat/html/Reporter.html#method-Reporter-update'><code>testthat::Reporter$update()</code></a></span></li>
+</ul>
+</details>
+}}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-VSCodeReporter-new"></a>}}
+\if{latex}{\out{\hypertarget{method-VSCodeReporter-new}{}}}
 \subsection{Method \code{new()}}{
+Initialize the reporter with optional arguments
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{VSCodeReporter$new(suite_name, ...)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{VSCodeReporter$new(...)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{...}}{Additional arguments passed to parent class}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-start_reporter"></a>}}
-\if{latex}{\out{\hypertarget{method-start_reporter}{}}}
+\if{html}{\out{<a id="method-VSCodeReporter-start_reporter"></a>}}
+\if{latex}{\out{\hypertarget{method-VSCodeReporter-start_reporter}{}}}
 \subsection{Method \code{start_reporter()}}{
+Start the test reporter session
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{VSCodeReporter$start_reporter()}\if{html}{\out{</div>}}
 }
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-start_file"></a>}}
-\if{latex}{\out{\hypertarget{method-start_file}{}}}
+\if{html}{\out{<a id="method-VSCodeReporter-start_file"></a>}}
+\if{latex}{\out{\hypertarget{method-VSCodeReporter-start_file}{}}}
 \subsection{Method \code{start_file()}}{
+Start processing a test file
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{VSCodeReporter$start_file(filename)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{filename}}{Character string, name of the test file}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-start_test"></a>}}
-\if{latex}{\out{\hypertarget{method-start_test}{}}}
+\if{html}{\out{<a id="method-VSCodeReporter-start_test"></a>}}
+\if{latex}{\out{\hypertarget{method-VSCodeReporter-start_test}{}}}
 \subsection{Method \code{start_test()}}{
+Start a test case
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{VSCodeReporter$start_test(context, test)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{context}}{Character string, test context name}
+
+\item{\code{test}}{Character string, test name}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-add_result"></a>}}
-\if{latex}{\out{\hypertarget{method-add_result}{}}}
+\if{html}{\out{<a id="method-VSCodeReporter-add_result"></a>}}
+\if{latex}{\out{\hypertarget{method-VSCodeReporter-add_result}{}}}
 \subsection{Method \code{add_result()}}{
+Add a test result
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{VSCodeReporter$add_result(context, test, result)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{context}}{Character string, test context name}
+
+\item{\code{test}}{Character string, test name}
+
+\item{\code{result}}{Test result object from testthat}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-end_test"></a>}}
-\if{latex}{\out{\hypertarget{method-end_test}{}}}
+\if{html}{\out{<a id="method-VSCodeReporter-end_test"></a>}}
+\if{latex}{\out{\hypertarget{method-VSCodeReporter-end_test}{}}}
 \subsection{Method \code{end_test()}}{
+End a test case
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{VSCodeReporter$end_test(context, test)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{context}}{Character string, test context name}
+
+\item{\code{test}}{Character string, test name}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-end_file"></a>}}
-\if{latex}{\out{\hypertarget{method-end_file}{}}}
+\if{html}{\out{<a id="method-VSCodeReporter-end_file"></a>}}
+\if{latex}{\out{\hypertarget{method-VSCodeReporter-end_file}{}}}
 \subsection{Method \code{end_file()}}{
+End processing a test file
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{VSCodeReporter$end_file()}\if{html}{\out{</div>}}
 }
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-end_reporter"></a>}}
-\if{latex}{\out{\hypertarget{method-end_reporter}{}}}
+\if{html}{\out{<a id="method-VSCodeReporter-end_reporter"></a>}}
+\if{latex}{\out{\hypertarget{method-VSCodeReporter-end_reporter}{}}}
 \subsection{Method \code{end_reporter()}}{
+End the test reporter session
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{VSCodeReporter$end_reporter()}\if{html}{\out{</div>}}
 }
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-cat_json"></a>}}
-\if{latex}{\out{\hypertarget{method-cat_json}{}}}
+\if{html}{\out{<a id="method-VSCodeReporter-cat_json"></a>}}
+\if{latex}{\out{\hypertarget{method-VSCodeReporter-cat_json}{}}}
 \subsection{Method \code{cat_json()}}{
+Output JSON data to console
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{VSCodeReporter$cat_json(x)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{x}}{Object to convert to JSON and output}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-clone}{}}}
+\if{html}{\out{<a id="method-VSCodeReporter-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-VSCodeReporter-clone}{}}}
 \subsection{Method \code{clone()}}{
 The objects of this class are cloneable with this method.
 \subsection{Usage}{

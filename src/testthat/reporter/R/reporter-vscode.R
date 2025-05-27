@@ -5,12 +5,14 @@
 #'
 #' @export
 VSCodeReporter <- R6::R6Class("VSCodeReporter",
-  inherit = Reporter,
+  inherit = testthat::Reporter,
   private = list(
     filename = NULL
   ),
   public = list(
 
+    #' @description Initialize the reporter with optional arguments
+    #' @param ... Additional arguments passed to parent class
     initialize = function(...) {
       super$initialize(...)
       private$filename <- NULL
@@ -18,19 +20,29 @@ VSCodeReporter <- R6::R6Class("VSCodeReporter",
       # FIXME: self$capabilities$parallel_updates <- TRUE
     },
 
+    #' @description Start the test reporter session
     start_reporter = function() {
       self$cat_json(list(type = "start_reporter"))
     },
 
+    #' @description Start processing a test file
+    #' @param filename Character string, name of the test file
     start_file = function(filename) {
       self$cat_json(list(type = "start_file", filename = filename))
       private$filename <- filename
     },
 
+    #' @description Start a test case
+    #' @param context Character string, test context name
+    #' @param test Character string, test name
     start_test = function(context, test) {
       self$cat_json(list(type = "start_test", test = as.character(test)))
     },
 
+    #' @description Add a test result
+    #' @param context Character string, test context name
+    #' @param test Character string, test name
+    #' @param result Test result object from testthat
     add_result = function(context, test, result) {
       test_result <- list(
         type = "add_result",
@@ -46,19 +58,26 @@ VSCodeReporter <- R6::R6Class("VSCodeReporter",
       self$cat_json(test_result)
     },
 
+    #' @description End a test case
+    #' @param context Character string, test context name
+    #' @param test Character string, test name
     end_test = function(context, test) {
       self$cat_json(list(type = "end_test", test = as.character(test)))
     },
 
+    #' @description End processing a test file
     end_file = function() {
       self$cat_json(list(type = "end_file", filename = private$filename))
       private$filename <- NULL
     },
 
+    #' @description End the test reporter session
     end_reporter = function() {
       self$cat_json(list(type = "end_reporter"))
     },
 
+    #' @description Output JSON data to console
+    #' @param x Object to convert to JSON and output
     cat_json = function(x) {
       self$cat_line(jsonlite::toJSON(x, auto_unbox = TRUE))
       flush.console()
