@@ -28,14 +28,14 @@ VSCodeReporter <- R6::R6Class("VSCodeReporter",
     },
 
     start_test = function(context, test) {
-      self$cat_json(list(type = "start_test", test = test))
+      self$cat_json(list(type = "start_test", test = as.character(test)))
     },
 
     add_result = function(context, test, result) {
       test_result <- list(
         type = "add_result",
         context = context,
-        test = test,
+        test = as.character(test),
         result = expectation_type(result),
         location = expectation_location(result),
         filename = expectation_filename(result)
@@ -47,7 +47,7 @@ VSCodeReporter <- R6::R6Class("VSCodeReporter",
     },
 
     end_test = function(context, test) {
-      self$cat_json(list(type = "end_test", test = test))
+      self$cat_json(list(type = "end_test", test = as.character(test)))
     },
 
     end_file = function() {
