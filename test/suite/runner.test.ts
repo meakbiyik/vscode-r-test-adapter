@@ -27,6 +27,7 @@ suite("runner", () => {
         log,
         testItemData,
         tempFilePaths,
+        context: <vscode.ExtensionContext>{},
     };
 
     test("Can run all tests", async () => {

@@ -37,6 +37,7 @@ suite("testthat/runner", () => {
         log,
         testItemData,
         tempFilePaths,
+        context: <vscode.ExtensionContext>{},
     };
 
     test("Single test file run for pass", async () => {

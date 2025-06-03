@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import runTestthatTest from "./testthat/runner";
-import { ItemFramework, TestingTools, TestRunner } from "./util";
+import { isExtensionEnabled, ItemFramework, R_DEBUGGER_EXTENSION_ID, TestingTools, TestRunner } from "./util";
 
 const testRunners: Record<ItemFramework, TestRunner> = {
     testthat: runTestthatTest,
@@ -24,6 +24,14 @@ async function runHandler(
     request: vscode.TestRunRequest,
     token: vscode.CancellationToken
 ) {
+    // Check if the R Debugger extension is enabled when running in debug mode.
+    const isDebugMode = request.profile?.kind === vscode.TestRunProfileKind.Debug;
+    const isDebuggerEnabled = isExtensionEnabled(R_DEBUGGER_EXTENSION_ID);
+    if (isDebugMode && !isDebuggerEnabled) {
+        vscode.window.showErrorMessage("R Debugger extension is not enabled. Please install and enable it to use the R test debug mode.");
+        return;
+    }
+
     testingTools.log.info("Test run started.");
     const run = testingTools.controller.createTestRun(request);
     const queue: vscode.TestItem[] = [];
@@ -61,7 +69,7 @@ async function runHandler(
         try {
             testingTools.log.info(`Running test with label ${test.label}`);
             test.busy = true;
-            let stdout = await runTest(testingTools, run, test);
+            let stdout = await runTest(testingTools, run, test, isDebugMode);
             test.busy = false;
             testingTools.log.debug(`Test output: ${stdout}`);
         } catch (error) {

@@ -6,4 +6,7 @@ This extension is built to help you run R tests on VSCode. Currently only `testt
 
 ## Requirements
 
-This extension expects `Rscript` to be in the path, or pointed with the `RTestAdapter.RscriptPath` setting, and requires `devtools>=2.3.2` to be installed for the environment Rscript is connected to. No other dependencies are expected.
+This extension expects `Rscript` to be in the path, or pointed with the `RTestAdapter.RscriptPath` setting, and requires `devtools>=2.3.2` to be installed for the environment Rscript is connected to.
+Additionally, in order to debug tests, you will need to install:
+ 1. the [R Debugger extension](https://marketplace.visualstudio.com/items/?itemName=RDebugger.r-debugger)
+ 2. the [vscDebugger](https://github.com/ManuelHentschel/vscDebugger) package in R

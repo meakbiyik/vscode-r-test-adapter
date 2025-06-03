@@ -27,6 +27,7 @@ suite("testthat/watcher", () => {
         log,
         testItemData,
         tempFilePaths,
+        context: <vscode.ExtensionContext>{},
     };
 
     test("Can create watchers and detect tests", async () => {
