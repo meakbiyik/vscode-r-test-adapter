@@ -10,3 +10,7 @@ This extension expects `Rscript` to be in the path, or pointed with the `RTestAd
 Additionally, in order to debug tests, you will need to install:
  1. the [R Debugger extension](https://marketplace.visualstudio.com/items/?itemName=RDebugger.r-debugger)
  2. the [vscDebugger](https://github.com/ManuelHentschel/vscDebugger) package in R
+
+Only the following file paths are searched for tests (TODO: add .vscode/settings.json options to specify that):
+ - `tinytest`: `"**/inst/tinytest/**/test*.R"`
+ - `testthat`: `"**/tests/testthat/**/test*.R"`
