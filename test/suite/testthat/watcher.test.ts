@@ -3,6 +3,7 @@ import { Log } from "vscode-test-adapter-util";
 import { expect } from "chai";
 import * as path from "path";
 import * as watcher from "../../../src/testthat/watcher";
+import * as utils from "../../../src/util";
 import { ItemFramework, ItemType, TestingTools } from "../../../src/util";
 
 const testRepoPath = path.join(__dirname, "..", "..", "..", "..", "test", "testRepo");
@@ -45,12 +46,12 @@ suite("testthat/watcher", () => {
         );
         let existingTest = testingTools.controller.items.get(testUri.path)!;
         // can get existing test
-        expect(watcher._unittestable.getOrCreateFile(testingTools, testUri).id).to.be.equal(
+        expect(utils._unittestable.getOrCreateFile(ItemFramework.Testthat, testingTools, testUri, true).id).to.be.equal(
             existingTest.id
         );
         expect(testingTools.testItemData.has(existingTest)).to.be.true;
         // can create non-existing test
-        let newTest = watcher._unittestable.getOrCreateFile(testingTools, newTestUri);
+        let newTest = utils._unittestable.getOrCreateFile(ItemFramework.Testthat, testingTools, newTestUri, true);
         expect(newTest).to.have.property("id");
         expect(testingTools.testItemData.has(newTest)).to.be.true;
     });

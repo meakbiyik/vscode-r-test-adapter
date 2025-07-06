@@ -34,9 +34,10 @@ suite("loader", () => {
     test("Can discover test files and create watchers", async () => {
         let watcherLists = await loader.discoverTestFiles(testingTools);
         // Register watcher
-        expect(watcherLists[0]).to.have.lengthOf(1);
+        expect(watcherLists[0]).to.have.lengthOf(2);
         // Parse all tests
-        expect(testingTools.controller.items.size).to.be.equal(5);
+        expect(testingTools.controller.items.size).to.be.equal(6);
+        expect(testingTools.controller.items.size).to.be.equal(6);
     });
 
     test("Can load tests from a file", async () => {

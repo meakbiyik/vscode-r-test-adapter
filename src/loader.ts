@@ -1,11 +1,14 @@
 import * as vscode from "vscode";
 import testthatWatcherFactory from "./testthat/watcher";
 import testthatParser from "./testthat/parser";
+import tinytestParser from "./tinytest/parser";
 import { ItemFramework, TestingTools, TestParser } from "./util";
+import tinytestWatcherFactory from "./tinytest/watcher";
 
-const watcherFactories = [testthatWatcherFactory];
+const watcherFactories = [testthatWatcherFactory, tinytestWatcherFactory];
 const testParsers: Record<ItemFramework, TestParser> = {
     testthat: testthatParser,
+    tinytest: tinytestParser,
 };
 
 async function discoverTestFiles(testingTools: TestingTools) {

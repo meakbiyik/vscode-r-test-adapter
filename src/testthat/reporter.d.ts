@@ -3,13 +3,13 @@
  */
 export interface TestResult {
     type:
-        | "start_reporter"
-        | "start_file"
-        | "start_test"
-        | "add_result"
-        | "end_test"
-        | "end_file"
-        | "end_reporter";
+    | "start_reporter"
+    | "start_file"
+    | "start_test"
+    | "add_result"
+    | "end_test"
+    | "end_file"
+    | "end_reporter";
     /**
      * Relative path of the test file if available
      */
@@ -18,6 +18,10 @@ export interface TestResult {
      * Test label if available
      */
     test?: string;
+    /**
+     * Test range if available (format: path/to/file:FIRST_ROW:LAST_ROW)
+     */
+    location?: string;
     /**
      * Test result if available
      */

@@ -4,7 +4,7 @@ import { expect } from "chai";
 import * as chai from "chai";
 import * as deepEqualInAnyOrder from "deep-equal-in-any-order";
 import * as chaiAsPromised from "chai-as-promised";
-import * as watcher from "../../../src/testthat/watcher";
+import * as utils from "../../../src/util";
 import * as vscode from "vscode";
 import { Log } from "vscode-test-adapter-util";
 import * as path from "path";
@@ -40,9 +40,11 @@ suite("testthat/parser", () => {
     };
 
     test("Tests are parsed from file", async () => {
-        const TestItem = watcher._unittestable.getOrCreateFile(
+        const TestItem = utils._unittestable.getOrCreateFile(
+            ItemFramework.Testthat,
             testingTools,
-            vscode.Uri.file(path.join(testRepoTestsPath, "test-email.R"))
+            vscode.Uri.file(path.join(testRepoTestsPath, "test-email.R")),
+            true
         );
         await parseTestsFromFile(testingTools, TestItem);
         let tests = TestItem.children;

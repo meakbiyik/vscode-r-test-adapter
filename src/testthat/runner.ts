@@ -1,22 +1,14 @@
 import * as util from "util";
 import * as path from "path";
-import * as winreg from "winreg";
-import * as fs from "fs";
 import * as tmp from "tmp-promise";
-import { spawn } from "child_process";
 import * as vscode from "vscode";
 import { encodeNodeId } from "./util";
+import { EntryPointSourceProvider } from "../util";
 import { DebugChannel, ProcessChannel } from "../streams"; // Adjust the path as needed
-import { ItemType, TestingTools } from "../util";
+import { getDevtoolsVersion, getRscriptCommand, ItemType, TestingTools, ANSI } from "../util";
 import { appendFile as _appendFile } from "fs";
-import { lookpath } from "lookpath";
 import { TestResult } from "./reporter";
 import { v4 as uuid } from "uuid";
-
-const ANSI = {
-    reset: '\x1b[0m',
-    red: '\x1b[31m',
-};
 
 const appendFile = util.promisify(_appendFile);
 const testReporterPath = path
@@ -24,13 +16,14 @@ const testReporterPath = path
     .replace(/\\/g, "/");
 const workspaceFolder = vscode.workspace.workspaceFolders![0].uri.fsPath
     .replace(/\\/g, "/");
-let RscriptPath: string | undefined;
 
 async function runTest(
     testingTools: TestingTools,
     run: vscode.TestRun,
     test: vscode.TestItem,
-    isDebugMode: boolean = false
+    isDebugMode: boolean = false,
+    shouldHighlightOutput: boolean = false,
+    getEntryPointSource: EntryPointSourceProvider = testthatEntryPoint
 ): Promise<string> {
     const getType = (testItem: vscode.TestItem) =>
         testingTools.testItemData.get(testItem)!.itemType;
@@ -51,7 +44,7 @@ async function runTest(
 
     await appendFile(tmpFilePath, source);
 
-    return executeTest(testingTools, run, test, tmpFilePath, isDebugMode)
+    return executeTest(testingTools, run, test, tmpFilePath, isDebugMode, shouldHighlightOutput)
         .catch(async (err) => {
             await tmpFileResult.cleanup();
             throw err;
@@ -62,12 +55,13 @@ async function runTest(
         });
 }
 
-async function executeTest(
+export async function executeTest(
     testingTools: TestingTools,
     run: vscode.TestRun,
     test: vscode.TestItem,
     filePath: string,
-    isDebugMode: boolean
+    isDebugMode: boolean,
+    shouldHighlightOutput: boolean = false
 ): Promise<string> {
     let cleanFilePath = filePath.replace(/\\/g, "/");
     let RscriptCommand = await getRscriptCommand(testingTools);
@@ -141,13 +135,11 @@ async function executeTest(
                                 break;
                             }
                             let duration = Date.now() - testStartDates.get(testItem!)!;
+                            let color = ANSI.reset;
                             switch (data.result) {
                                 case "success":
                                 case "warning":
                                     run.passed(testItem!, duration);
-                                    if (data.message) {
-                                        run.appendOutput(data.message, undefined, testItem);
-                                    }
                                     break;
                                 case "failure":
                                     run.failed(
@@ -155,12 +147,10 @@ async function executeTest(
                                         new vscode.TestMessage(data.message!),
                                         duration
                                     );
+                                    color = ANSI.red;
                                     break;
                                 case "skip":
                                     run.skipped(testItem!);
-                                    if (data.message) {
-                                        run.appendOutput(data.message, undefined, testItem);
-                                    }
                                     break;
                                 case "error":
                                     run.errored(
@@ -168,7 +158,23 @@ async function executeTest(
                                         new vscode.TestMessage(data.message!),
                                         duration
                                     );
+                                    color = ANSI.red;
                                     break;
+                            }
+                            if (data.message) {
+                                // this is used by tinytest
+                                if (shouldHighlightOutput && data.location) {
+                                    const [firstRow, _] = data.location!.split(":").slice(-2);
+                                    const location = new vscode.Location(test.uri!, new vscode.Position(Number(firstRow) - 1, 1));
+                                    const localization = location ? `${path.basename(location!.uri.fsPath)}:${location.range.start.line}: ` : "";
+                                    const message = data.message!.split("\n",).join("\r\n"); // a workaround for replaceAll which doesnt exist
+                                    run.appendOutput(`${localization}${color}${message}${ANSI.reset}\r\n`, location, testItem);
+                                    break;
+                                }
+                                else {
+                                    const message = data.message!.split("\n",).join("\r\n"); // a workaround for replaceAll which doesnt exist
+                                    run.appendOutput(`${message}`, undefined, testItem);
+                                }
                             }
                         }
                         break;
@@ -203,7 +209,7 @@ function findTestRecursively(testIdToFind: string, testToSearch: vscode.TestItem
 // The entry point hacks the testthat package to disable any other test.
 // This way the user has a seamless experience when running the test
 // both in the normal and debug mode.
-async function getEntryPointSource(
+export async function testthatEntryPoint(
     testingTools: TestingTools,
     test: vscode.TestItem,
     isDebug: boolean = false,
@@ -297,101 +303,5 @@ if (IS_DEBUG) {
 }
 
 
-async function getRscriptCommand(testingTools: TestingTools) {
-    let config = vscode.workspace.getConfiguration("RTestAdapter");
-    let configPath: string | undefined = config.get("RscriptPath");
-    if (configPath !== undefined && configPath !== null) {
-        if ((<string>configPath).length > 0 && fs.existsSync(configPath)) {
-            testingTools.log.info(`Using Rscript in the configuration: ${configPath}`);
-            return Promise.resolve(`"${configPath}"`);
-        } else {
-            testingTools.log.warn(
-                `Rscript path given in the configuration ${configPath} is invalid. ` +
-                `Falling back to defaults.`
-            );
-        }
-    }
-    if (RscriptPath !== undefined) {
-        testingTools.log.info(`Using previously detected Rscript path: ${RscriptPath}`);
-        return Promise.resolve(`"${RscriptPath}"`);
-    }
-    RscriptPath = await lookpath("Rscript");
-    if (RscriptPath !== undefined) {
-        testingTools.log.info(`Found Rscript in PATH: ${RscriptPath}`);
-        return Promise.resolve(`"${RscriptPath}"`);
-    }
-    if (process.platform != "win32") {
-        let candidates = ["/usr/bin", "/usr/local/bin"];
-        for (const candidate of candidates) {
-            let possibleRscriptPath = path.join(candidate, "Rscript");
-            if (fs.existsSync(possibleRscriptPath)) {
-                testingTools.log.info(
-                    `found Rscript among candidate paths: ${possibleRscriptPath}`
-                );
-                RscriptPath = possibleRscriptPath;
-                return Promise.resolve(`"${RscriptPath}"`);
-            }
-        }
-    } else {
-        try {
-            const key = new winreg({
-                hive: winreg.HKLM,
-                key: "\\Software\\R-Core\\R",
-            });
-            const item: winreg.RegistryItem = await new Promise((resolve, reject) =>
-                key.get("InstallPath", (err, result) => (err ? reject(err) : resolve(result)))
-            );
-
-            const rhome = item.value;
-
-            let possibleRscriptPath = rhome + "\\bin\\Rscript.exe";
-            if (fs.existsSync(possibleRscriptPath)) {
-                testingTools.log.info(`found Rscript in registry: ${possibleRscriptPath}`);
-                RscriptPath = possibleRscriptPath;
-                return Promise.resolve(`"${RscriptPath}"`);
-            }
-        } catch (e) { }
-    }
-    throw Error("Rscript could not be found in PATH, cannot run the tests.");
-}
-
-async function getDevtoolsVersion(
-    testingTools: TestingTools,
-    RscriptCommand: string
-): Promise<{ major: number; minor: number; patch: number }> {
-    return new Promise(async (resolve, reject) => {
-        let childProcess = spawn(
-            `${RscriptCommand} -e "suppressMessages(library('devtools'));` +
-            `packageVersion('devtools')"`,
-            {
-                shell: true,
-            }
-        );
-        let stdout = "";
-        vscode
-        childProcess.once("exit", () => {
-            stdout += childProcess.stdout.read() + "\n" + childProcess.stderr.read();
-            let version = stdout.match(/(\d*)\.(\d*)\.(\d*)/i);
-            if (version !== null) {
-                testingTools.log.info(`devtools version: ${version[0]}`);
-                const major = parseInt(version[1]);
-                const minor = parseInt(version[2]);
-                const patch = parseInt(version[3]);
-                resolve({ major, minor, patch });
-            } else {
-                reject(Error("devtools version could not be detected. Output:\n" + stdout));
-            }
-        });
-        childProcess.once("error", (err) => {
-            reject(err);
-        });
-    });
-}
-
 export default runTest;
 
-const _unittestable = {
-    getRscriptCommand,
-    getDevtoolsVersion,
-};
-export { _unittestable };

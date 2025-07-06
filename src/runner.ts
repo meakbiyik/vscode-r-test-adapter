@@ -1,9 +1,22 @@
 import * as vscode from "vscode";
-import runTestthatTest from "./testthat/runner";
-import { isExtensionEnabled, ItemFramework, R_DEBUGGER_EXTENSION_ID, TestingTools, TestRunner } from "./util";
+import { isExtensionEnabled, EntryPointSourceProvider, ItemFramework, TestingTools, TestRunner, R_DEBUGGER_EXTENSION_ID } from "./util";
+import runTest, { testthatEntryPoint as testthatGetEntryPointSource } from './testthat/runner';
+import { tinytestEntryPoint as tinytestGetEntryPointSource } from './tinytest/runner';
 
+function buildTestRunner(
+    entryProvider: EntryPointSourceProvider,
+    shouldHighlightOutput: boolean
+): TestRunner {
+    return (
+        tools: TestingTools,
+        run: vscode.TestRun,
+        item: vscode.TestItem,
+        isDebug: boolean
+    ) => runTest(tools, run, item, isDebug, shouldHighlightOutput, entryProvider);
+}
 const testRunners: Record<ItemFramework, TestRunner> = {
-    testthat: runTestthatTest,
+    testthat: buildTestRunner(testthatGetEntryPointSource, false),
+    tinytest: buildTestRunner(tinytestGetEntryPointSource, true)
 };
 
 function setRecursively(

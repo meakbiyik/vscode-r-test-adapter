@@ -1,6 +1,5 @@
 import runTest from "../../../src/testthat/runner";
-import * as runner from "../../../src/testthat/runner";
-import * as watcher from "../../../src/testthat/watcher";
+import * as utils from "../../../src/util";
 import parseTestsFromFile from "../../../src/testthat/parser";
 import * as chai from "chai";
 import * as deepEqualInAnyOrder from "deep-equal-in-any-order";
@@ -41,9 +40,11 @@ suite("testthat/runner", () => {
     };
 
     test("Single test file run for pass", async () => {
-        const TestItem = watcher._unittestable.getOrCreateFile(
+        const TestItem = utils._unittestable.getOrCreateFile(
+            ItemFramework.Testthat,
             testingTools,
-            vscode.Uri.file(path.join(testRepoTestsPath, "test-memoize.R"))
+            vscode.Uri.file(path.join(testRepoTestsPath, "test-memoize.R")),
+            true
         );
         const run = testingTools.controller.createTestRun(new vscode.TestRunRequest([TestItem]));
         let stdout = await runTest(testingTools, run, TestItem);
@@ -57,9 +58,11 @@ suite("testthat/runner", () => {
     });
 
     test("Single test file run for fail", async () => {
-        const TestItem = watcher._unittestable.getOrCreateFile(
+        const TestItem = utils._unittestable.getOrCreateFile(
+            ItemFramework.Testthat,
             testingTools,
-            vscode.Uri.file(path.join(testRepoTestsPath, "test-fallbacks.R"))
+            vscode.Uri.file(path.join(testRepoTestsPath, "test-fallbacks.R")),
+            true
         );
         const run = testingTools.controller.createTestRun(new vscode.TestRunRequest([TestItem]));
         let stdout = await runTest(testingTools, run, TestItem);
@@ -71,9 +74,11 @@ suite("testthat/runner", () => {
     });
 
     test("Single test file run for skip", async () => {
-        const TestItem = watcher._unittestable.getOrCreateFile(
+        const TestItem = utils._unittestable.getOrCreateFile(
+            ItemFramework.Testthat,
             testingTools,
-            vscode.Uri.file(path.join(testRepoTestsPath, "test-email.R"))
+            vscode.Uri.file(path.join(testRepoTestsPath, "test-email.R")),
+            true
         );
         const run = testingTools.controller.createTestRun(new vscode.TestRunRequest([TestItem]));
         let stdout = await runTest(testingTools, run, TestItem);
@@ -87,9 +92,11 @@ suite("testthat/runner", () => {
     });
 
     test("Single test run for pass", async () => {
-        const TestItem = watcher._unittestable.getOrCreateFile(
+        const TestItem = utils._unittestable.getOrCreateFile(
+            ItemFramework.Testthat,
             testingTools,
-            vscode.Uri.file(path.join(testRepoTestsPath, "test-memoize.R"))
+            vscode.Uri.file(path.join(testRepoTestsPath, "test-memoize.R")),
+            true
         );
         await parseTestsFromFile(testingTools, TestItem);
         const childrens: string[] = [];
@@ -111,9 +118,11 @@ suite("testthat/runner", () => {
     });
 
     test("Single test run for fail", async () => {
-        const TestItem = watcher._unittestable.getOrCreateFile(
+        const TestItem = utils._unittestable.getOrCreateFile(
+            ItemFramework.Testthat,
             testingTools,
-            vscode.Uri.file(path.join(testRepoTestsPath, "test-fallbacks.R"))
+            vscode.Uri.file(path.join(testRepoTestsPath, "test-fallbacks.R")),
+            true
         );
         await parseTestsFromFile(testingTools, TestItem);
         const childrens: string[] = [];
@@ -135,9 +144,11 @@ suite("testthat/runner", () => {
     });
 
     test("Single test run for skip", async () => {
-        const TestItem = watcher._unittestable.getOrCreateFile(
+        const TestItem = utils._unittestable.getOrCreateFile(
+            ItemFramework.Testthat,
             testingTools,
-            vscode.Uri.file(path.join(testRepoTestsPath, "test-email.R"))
+            vscode.Uri.file(path.join(testRepoTestsPath, "test-email.R")),
+            true
         );
         await parseTestsFromFile(testingTools, TestItem);
         const childrens: string[] = [];
@@ -159,12 +170,12 @@ suite("testthat/runner", () => {
     });
 
     test("RScript command can be found", async () => {
-        expect(runner._unittestable.getRscriptCommand(testingTools)).to.eventually.be.fulfilled;
+        expect(utils._unittestable.getRscriptCommand(testingTools)).to.eventually.be.fulfilled;
     });
 
     test("devtools version can be found", async () => {
-        let RscriptCommand = await runner._unittestable.getRscriptCommand(testingTools);
-        expect(runner._unittestable.getDevtoolsVersion(testingTools, RscriptCommand)).to.eventually
+        let RscriptCommand = await utils._unittestable.getRscriptCommand(testingTools);
+        expect(utils._unittestable.getDevtoolsVersion(testingTools, RscriptCommand)).to.eventually
             .be.fulfilled;
     });
 
