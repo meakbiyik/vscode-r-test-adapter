@@ -8,6 +8,7 @@ export function run(): Promise<void> {
         ui: "tdd",
         color: true,
         timeout: 120000,
+        grep: process.env.TEST_GREP ? new RegExp(process.env.TEST_GREP) : undefined,
     });
 
     const testsRoot = path.resolve(__dirname, "..");
