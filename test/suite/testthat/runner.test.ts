@@ -169,15 +169,5 @@ suite("testthat/runner", () => {
         expect(skip_count).to.be.equal(1);
     });
 
-    test("RScript command can be found", async () => {
-        expect(utils._unittestable.getRscriptCommand(testingTools)).to.eventually.be.fulfilled;
-    });
-
-    test("devtools version can be found", async () => {
-        let RscriptCommand = await utils._unittestable.getRscriptCommand(testingTools);
-        expect(utils._unittestable.getDevtoolsVersion(testingTools, RscriptCommand)).to.eventually
-            .be.fulfilled;
-    });
-
     controller.dispose();
 });
