@@ -14,9 +14,13 @@ function buildTestRunner(
         isDebug: boolean
     ) => runTest(tools, run, item, isDebug, shouldHighlightOutput, entryProvider);
 }
+
+export const runTestthatTest = buildTestRunner(testthatGetEntryPointSource, false);
+export const runTinytestTest = buildTestRunner(tinytestGetEntryPointSource, true);
+
 const testRunners: Record<ItemFramework, TestRunner> = {
-    testthat: buildTestRunner(testthatGetEntryPointSource, false),
-    tinytest: buildTestRunner(tinytestGetEntryPointSource, true)
+    testthat: runTestthatTest,
+    tinytest: runTinytestTest
 };
 
 function setRecursively(

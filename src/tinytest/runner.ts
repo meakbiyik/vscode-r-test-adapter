@@ -32,38 +32,35 @@ tinytest <- loadNamespace(TINYTEST)
 
 reporter <- VSCodeReporter$new()
 
-if (IS_DEBUG) {
+orig_tinytest <- tinytest::tinytest
+new_tinytest <- function(...) {
+  args <- list(...)
 
-  orig_tinytest <- tinytest::tinytest
-  new_tinytest <- function(...) {
-    args <- list(...)
+  src  <- structure(c(getSrcLocation(args$call), 1),
+                    class    = "srcref",
+                    srcfile  = structure(list(filename = file),
+                                          class = "srcfile"))
 
-    src  <- structure(c(getSrcLocation(args$call), 1),
-                      class    = "srcref",
-                      srcfile  = structure(list(filename = file),
-                                            class = "srcfile"))
+  cls  <- if (isTRUE(args$result))         "expectation_success"
+          else if (isFALSE(args$result))   "expectation_failure"
+          else                        "expectation_skip"   # side effect
 
-    cls  <- if (isTRUE(args$result))         "expectation_success"
-            else if (isFALSE(args$result))   "expectation_failure"
-            else                        "expectation_skip"   # side effect
+  exp  <- structure(
+    list(message = if (!isTRUE(args$result)) args$diff else NULL,
+          srcref  = src),
+    class = c(cls, "expectation", "condition")
+  )
 
-    exp  <- structure(
-      list(message = if (!isTRUE(args$result)) args$diff else NULL,
-            srcref  = src),
-      class = c(cls, "expectation", "condition")
-    )
-
-    reporter$start_test(context = basename(file), test = file)
-    reporter$add_result(context = basename(file), test = file, result = exp)
-    reporter$end_test(context   = basename(file), test = file)
-    orig_tinytest(...)
-  }
-
-  suppressPackageStartupMessages({library(tinytest)})
-  unlockBinding(TINYTEST, tinytest)
-  assignInNamespace(TINYTEST, new_tinytest, ns = TINYTEST)
-  lockBinding(TINYTEST, tinytest)
+  reporter$start_test(context = basename(file), test = file)
+  reporter$add_result(context = basename(file), test = file, result = exp)
+  reporter$end_test(context   = basename(file), test = file)
+  orig_tinytest(...)
 }
+
+suppressPackageStartupMessages({library(tinytest)})
+unlockBinding(TINYTEST, tinytest)
+assignInNamespace(TINYTEST, new_tinytest, ns = TINYTEST)
+lockBinding(TINYTEST, tinytest)
 
 reporter$start_reporter()
 reporter$start_file(normalizePath(file))
