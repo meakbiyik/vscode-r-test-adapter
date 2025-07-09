@@ -15,6 +15,7 @@ export async function tinytestEntryPoint(
   const file = test?.uri!.fsPath
     .replace(/\\/g, "/");
   return `
+
 # NOTE! This file has been generated automatically by the VSCode R Test Adapter. Modification has no effect.
 
 # This file adds JSON reporting capabilities to tinytest.
@@ -32,45 +33,55 @@ tinytest <- loadNamespace(TINYTEST)
 
 reporter <- VSCodeReporter$new()
 
-orig_tinytest <- tinytest::tinytest
-new_tinytest <- function(...) {
-  args <- list(...)
-
-  src  <- structure(c(getSrcLocation(args$call), 1),
+emit_assertion_result <- function(call, result, diff, range) {
+  src  <- structure(range,
                     class    = "srcref",
                     srcfile  = structure(list(filename = file),
                                           class = "srcfile"))
 
-  cls  <- if (isTRUE(args$result))         "expectation_success"
-          else if (isFALSE(args$result))   "expectation_failure"
+  cls  <- if (isTRUE(result))         "expectation_success"
+          else if (isFALSE(result))   "expectation_failure"
           else                        "expectation_skip"   # side effect
 
   exp  <- structure(
-    list(message = if (!isTRUE(args$result)) args$diff else NULL,
+    list(message = if (!isTRUE(result)) diff else NULL,
           srcref  = src),
     class = c(cls, "expectation", "condition")
   )
 
-  reporter$start_test(context = basename(file), test = file)
   reporter$add_result(context = basename(file), test = file, result = exp)
-  reporter$end_test(context   = basename(file), test = file)
-  orig_tinytest(...)
 }
 
-suppressPackageStartupMessages({library(tinytest)})
-unlockBinding(TINYTEST, tinytest)
-assignInNamespace(TINYTEST, new_tinytest, ns = TINYTEST)
-lockBinding(TINYTEST, tinytest)
+if (IS_DEBUG) {
+  orig_tinytest <- tinytest::tinytest
+  new_tinytest <- function(...) {
+    args <- list(...)
+    result <- orig_tinytest(...)
+    emit_assertion_result(args$call, args$result, args$diff, getSrcLocation(args$call))
+    result
+  }
+  suppressPackageStartupMessages({library(tinytest)})
+  unlockBinding(TINYTEST, tinytest)
+  assignInNamespace(TINYTEST, new_tinytest, ns = TINYTEST)
+  lockBinding(TINYTEST, tinytest)
+}
 
 reporter$start_reporter()
 reporter$start_file(normalizePath(file))
+reporter$start_test(context = basename(file), test = file)
 
 if (IS_DEBUG) {
-  .vsc.debugSource('${file}')
+  .vsc.debugSource('/home/kubajal/development/vscode-r-test-adapter/test/testRepo/inst/tinytest/test-arithmetic.R')
 } else {
-  tinytest::run_test_file('${file}')
+  results <- tinytest::run_test_file('/home/kubajal/development/vscode-r-test-adapter/test/testRepo/inst/tinytest/test-arithmetic.R', verbose=2)
+  df <- as.data.frame(results)
+  for (i in seq_len(nrow(df))) {
+    row <- df[i, ]
+    emit_assertion_result(row$call, row$result, row$diff, c(row$first, row$last))
+  }
 }
 
+reporter$end_test(context   = basename(file), test = file)
 reporter$end_file()
 reporter$end_reporter()
 `;
