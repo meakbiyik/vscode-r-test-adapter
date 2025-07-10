@@ -26,10 +26,10 @@ export async function tinytestEntryPoint(
 TINYTEST <- "tinytest"
 IS_DEBUG <- ${Number(isDebug)}
 
-devtools::load_all('${testReporterPath}')
-file <- '${file}'
+devtools::load_all('${testReporterPath}', export_all = FALSE, attach_testthat = FALSE)
+file <- '/home/kubajal/development/vscode-r-test-adapter/test/testRepo/inst/tinytest/test-misc.R'
 
-tinytest <- loadNamespace(TINYTEST)
+library(tinytest)
 
 reporter <- VSCodeReporter$new()
 
@@ -60,7 +60,6 @@ if (IS_DEBUG) {
     emit_assertion_result(args$call, args$result, args$diff, getSrcLocation(args$call))
     result
   }
-  suppressPackageStartupMessages({library(tinytest)})
   unlockBinding(TINYTEST, tinytest)
   assignInNamespace(TINYTEST, new_tinytest, ns = TINYTEST)
   lockBinding(TINYTEST, tinytest)
