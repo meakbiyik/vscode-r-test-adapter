@@ -36,8 +36,7 @@ suite("loader", () => {
         // Register watcher
         expect(watcherLists[0]).to.have.lengthOf(2);
         // Parse all tests
-        expect(testingTools.controller.items.size).to.be.equal(6);
-        expect(testingTools.controller.items.size).to.be.equal(6);
+        expect(testingTools.controller.items.size).to.be.equal(11);
     });
 
     test("Can load tests from a file", async () => {

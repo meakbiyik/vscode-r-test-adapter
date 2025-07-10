@@ -36,13 +36,13 @@ suite("tinytest/watcher", () => {
         // Check if object is a vscode.FileSystemWatcher
         expect(w).to.have.property("dispose");
         // Check if the files are detected
-        expect(testingTools.controller.items.size).to.be.equal(1);
+        expect(testingTools.controller.items.size).to.be.equal(6);
     });
 
     test("Can get or create test file items", async () => {
-        let testUri = vscode.Uri.file(path.join(testRepoPath, "inst", "tinytest", "test-arithmetic.R"));
+        let testUri = vscode.Uri.file(path.join(testRepoPath, "inst", "tinytest", "test-check-keywords.R"));
         let newTestUri = vscode.Uri.file(
-            path.join(testRepoPath, "inst", "tinytest", "test-arithmetic-new.R")
+            path.join(testRepoPath, "inst", "tinytest", "test-check-keywords.R")
         );
         let existingTest = testingTools.controller.items.get(testUri.path)!;
         // can get existing test

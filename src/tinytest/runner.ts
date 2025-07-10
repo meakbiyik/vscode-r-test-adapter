@@ -14,6 +14,8 @@ export async function tinytestEntryPoint(
 ) {
   const file = test?.uri!.fsPath
     .replace(/\\/g, "/");
+  const workspaceFolder = vscode.workspace.workspaceFolders![0].uri.fsPath
+    .replace(/\\/g, "/");
   return `
 
 # NOTE! This file has been generated automatically by the VSCode R Test Adapter. Modification has no effect.
@@ -25,18 +27,20 @@ export async function tinytestEntryPoint(
 
 TINYTEST <- "tinytest"
 IS_DEBUG <- ${Number(isDebug)}
+FILE <- '${file}'
 
+# This prevents polluting the global namespace with testthat::expect_* functions
+# which are loaded by load_all of VSCode reporter
 devtools::load_all('${testReporterPath}', export_all = FALSE, attach_testthat = FALSE)
-file <- '/home/kubajal/development/vscode-r-test-adapter/test/testRepo/inst/tinytest/test-misc.R'
 
 library(tinytest)
 
 reporter <- VSCodeReporter$new()
 
-emit_assertion_result <- function(call, result, diff, range) {
+emit_JSON_result <- function(call, result, diff, range) {
   src  <- structure(range,
                     class    = "srcref",
-                    srcfile  = structure(list(filename = file),
+                    srcfile  = structure(list(filename = FILE),
                                           class = "srcfile"))
 
   cls  <- if (isTRUE(result))         "expectation_success"
@@ -49,15 +53,17 @@ emit_assertion_result <- function(call, result, diff, range) {
     class = c(cls, "expectation", "condition")
   )
 
-  reporter$add_result(context = basename(file), test = file, result = exp)
+  reporter$add_result(context = basename(FILE), test = FILE, result = exp)
 }
 
 if (IS_DEBUG) {
+  # In debug mode, we need to hack the tinytest::tinytest internal function
+  # which is called by all tinytest::expect_* functions such that it emits our JSON result objects to stdout.
   orig_tinytest <- tinytest::tinytest
   new_tinytest <- function(...) {
     args <- list(...)
     result <- orig_tinytest(...)
-    emit_assertion_result(args$call, args$result, args$diff, getSrcLocation(args$call))
+    emit_JSON_result(args$call, args$result, args$diff, getSrcLocation(args$call))
     result
   }
   unlockBinding(TINYTEST, tinytest)
@@ -66,21 +72,24 @@ if (IS_DEBUG) {
 }
 
 reporter$start_reporter()
-reporter$start_file(normalizePath(file))
-reporter$start_test(context = basename(file), test = file)
+reporter$start_file(normalizePath(FILE))
+reporter$start_test(context = basename(FILE), test = FILE)
 
 if (IS_DEBUG) {
-  .vsc.debugSource(file)
+  .vsc.load_all('${workspaceFolder}')
+  .vsc.debugSource(FILE)
 } else {
-  results <- tinytest::run_test_file(file, verbose=2)
+  # If we are in non-debug mode, we need to first run tests and then parse their results
+  devtools::load_all('${workspaceFolder}')
+  results <- tinytest::run_test_file(FILE, verbose=2)
   df <- as.data.frame(results)
   for (i in seq_len(nrow(df))) {
     row <- df[i, ]
-    emit_assertion_result(row$call, row$result, row$diff, c(row$first, row$last))
+    emit_JSON_result(row$call, row$result, row$diff, c(row$first, row$last))
   }
 }
 
-reporter$end_test(context   = basename(file), test = file)
+reporter$end_test(context   = basename(FILE), test = FILE)
 reporter$end_file()
 reporter$end_reporter()
 `;
