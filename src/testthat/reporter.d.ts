@@ -19,7 +19,7 @@ export interface TestResult {
      */
     test?: string;
     /**
-     * Test range if available (format: path/to/file:line_number)
+     * Test range if available (format: path/to/file:FIRST_ROW:LAST_ROW)
      */
     location?: string;
     /**
