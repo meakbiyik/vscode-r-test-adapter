@@ -2,12 +2,10 @@ import * as util from "util";
 import * as path from "path";
 import * as tmp from "tmp-promise";
 import * as vscode from "vscode";
-import { encodeNodeId } from "./util";
 import { EntryPointSourceProvider } from "../util";
 import { DebugChannel, ProcessChannel } from "../streams"; // Adjust the path as needed
-import { getDevtoolsVersion, getRscriptCommand, ItemType, TestingTools, ANSI } from "../util";
+import { getDevtoolsVersion, getRscriptCommand, ItemType, TestingTools } from "../util";
 import { appendFile as _appendFile } from "fs";
-import { TestResult } from "./reporter";
 import { v4 as uuid } from "uuid";
 
 const appendFile = util.promisify(_appendFile);
@@ -71,138 +69,8 @@ export async function executeTest(
     // Use DebugChannel for debug mode to capture detailed debugging information,
     // and ProcessChannel for normal mode to execute the test script as a subprocess.
     let eventStream = isDebugMode ? new DebugChannel(testingTools, cwd, cleanFilePath) : new ProcessChannel(command, cwd);
+    return eventStream.start(run, test, isDebugMode, shouldHighlightOutput);
 
-    let testStartDates = new WeakMap<vscode.TestItem, number>();
-    return new Promise<string>((resolve, reject) => {
-        let runOutput = "";
-
-        eventStream
-            .on("stdout", function (line: string) {
-                runOutput += line + "\r\n";
-                run.appendOutput(line + "\r\n");
-            })
-            .on("stderr", function (line: string) {
-                runOutput += `${ANSI.red}${line}${ANSI.reset}\r\n`;
-                run.appendOutput(`${ANSI.red}${line}${ANSI.reset}\r\n`);
-            })
-            .on("test_result", function (data: TestResult) {
-                runOutput += JSON.stringify(data) + "\n";
-                switch (data.type) {
-                    case "start_test":
-                        if (data.test !== undefined) {
-                            let testItem: undefined | vscode.TestItem = findTestRecursively(
-                                encodeNodeId(test.uri!.fsPath, data.test),
-                                test
-                            ) ?? test;
-                            if (testItem === undefined) {
-                                reject(
-                                    `Test with id ${encodeNodeId(
-                                        test.uri!.fsPath,
-                                        data.test
-                                    )} could not be found. Please report this.`
-                                );
-                                break;
-                            }
-                            if (!testItem.id.includes(data.test)) {
-                                break;
-                            }
-                            testStartDates.set(testItem!, Date.now());
-                            run.started(testItem!);
-                        }
-                        break;
-                    case "add_result":
-                        if (data.result !== undefined && data.test !== undefined) {
-                            let testItem: undefined | vscode.TestItem = findTestRecursively(
-                                encodeNodeId(test.uri!.fsPath, data.test),
-                                test
-                            ) ?? test;
-                            if (testItem === undefined) {
-                                reject(
-                                    `Test with id ${encodeNodeId(
-                                        test.uri!.fsPath,
-                                        data.test
-                                    )} could not be found. Please report this.`
-                                );
-                                break;
-                            }
-                            if (vscode.debug.activeDebugSession != undefined && !isDebugMode) {
-                                vscode.window.showWarningMessage("Got a debugging session while not in debug mode. " +
-                                    "Please report this.");
-                                break;
-                            }
-                            if (!testItem.id.includes(data.test)) {
-                                // Silently ignore the test result if the test item id does not match
-                                break;
-                            }
-                            let duration = Date.now() - testStartDates.get(testItem!)!;
-                            let color = ANSI.reset;
-                            switch (data.result) {
-                                case "success":
-                                case "warning":
-                                    run.passed(testItem!, duration);
-                                    break;
-                                case "failure":
-                                    run.failed(
-                                        testItem!,
-                                        new vscode.TestMessage(data.message!),
-                                        duration
-                                    );
-                                    color = ANSI.red;
-                                    break;
-                                case "skip":
-                                    run.skipped(testItem!);
-                                    break;
-                                case "error":
-                                    run.errored(
-                                        testItem!,
-                                        new vscode.TestMessage(data.message!),
-                                        duration
-                                    );
-                                    color = ANSI.red;
-                                    break;
-                            }
-                            if (data.message) {
-                                // this is used by tinytest
-                                if (shouldHighlightOutput && data.location) {
-                                    const [firstRow, _] = data.location!.split(":").slice(-2);
-                                    const location = new vscode.Location(test.uri!, new vscode.Position(Number(firstRow) - 1, 1));
-                                    const localization = location ? `${path.basename(location!.uri.fsPath)}:${location.range.start.line}: ` : "";
-                                    const message = data.message!.split("\n",).join("\r\n"); // a workaround for replaceAll which doesnt exist
-                                    run.appendOutput(`${localization}${color}${message}${ANSI.reset}\r\n`, location, testItem);
-                                    break;
-                                }
-                                else {
-                                    const message = data.message!.split("\n",).join("\r\n"); // a workaround for replaceAll which doesnt exist
-                                    run.appendOutput(`${message}`, undefined, testItem);
-                                }
-                            }
-                        }
-                        break;
-                }
-            })
-            .on("end", () => {
-                if (runOutput.includes("Execution halted")) {
-                    reject(Error(runOutput));
-                }
-                resolve(runOutput);
-            })
-            .on("error", () => {
-                reject(runOutput);
-            });
-    });
-}
-
-function findTestRecursively(testIdToFind: string, testToSearch: vscode.TestItem) {
-    let testFound: vscode.TestItem | undefined = undefined;
-    testToSearch.children.forEach((childTest: vscode.TestItem) => {
-        if (testFound === undefined) {
-            testFound =
-                testIdToFind == childTest.id
-                    ? childTest
-                    : findTestRecursively(testIdToFind, childTest);
-        }
-    });
-    return testFound;
 }
 
 // This function returns the 'entry point' for the R test.

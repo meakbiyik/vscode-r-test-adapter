@@ -4,7 +4,7 @@ import { expect } from "chai";
 import * as path from "path";
 import * as loader from "../../src/loader";
 import { ItemFramework, ItemType, TestingTools } from "../../src/util";
-import { encodeNodeId } from "../../src/testthat/util";
+import { encodeNodeId } from "../../src/util";
 
 const testRepoPath = path.join(__dirname, "..", "..", "..", "test", "testRepo");
 

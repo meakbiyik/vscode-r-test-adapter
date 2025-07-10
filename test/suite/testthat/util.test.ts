@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import * as util from "../../../src/testthat/util";
+import * as util from "../../../src/util";
 
 suite("testthat/util", () => {
     test("Can create a unique and expressive NodeID", async () => {

@@ -33,7 +33,7 @@ FILE <- '${file}'
 # which are loaded by load_all of VSCode reporter
 devtools::load_all('${testReporterPath}', export_all = FALSE, attach_testthat = FALSE)
 
-library(tinytest)
+tinytest <- loadNamespace('tinytest')
 
 reporter <- VSCodeReporter$new()
 
@@ -56,9 +56,15 @@ emit_JSON_result <- function(call, result, diff, range) {
   reporter$add_result(context = basename(FILE), test = FILE, result = exp)
 }
 
+reporter$start_reporter()
+reporter$start_file(normalizePath(FILE))
+reporter$start_test(context = basename(FILE), test = FILE)
+
 if (IS_DEBUG) {
-  # In debug mode, we need to hack the tinytest::tinytest internal function
-  # which is called by all tinytest::expect_* functions such that it emits our JSON result objects to stdout.
+  # We are in the debug mode. We need to .vsc.debugSource so breakpoints are respected.
+  # Because .vsc.debugSource doesn't expose any other hooks and we need to somehow emit VSCode Reporter JSONs,
+  # we need to hack tinytest::tinytest. It is the internal function
+  # that gets called by all tinytest::expect_* functions.
   orig_tinytest <- tinytest::tinytest
   new_tinytest <- function(...) {
     args <- list(...)
@@ -69,14 +75,8 @@ if (IS_DEBUG) {
   unlockBinding(TINYTEST, tinytest)
   assignInNamespace(TINYTEST, new_tinytest, ns = TINYTEST)
   lockBinding(TINYTEST, tinytest)
-}
-
-reporter$start_reporter()
-reporter$start_file(normalizePath(FILE))
-reporter$start_test(context = basename(FILE), test = FILE)
-
-if (IS_DEBUG) {
   .vsc.load_all('${workspaceFolder}')
+  library(tinytest)
   .vsc.debugSource(FILE)
 } else {
   # If we are in non-debug mode, we need to first run tests and then parse their results
