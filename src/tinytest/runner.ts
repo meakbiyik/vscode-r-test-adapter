@@ -71,9 +71,9 @@ reporter$start_file(normalizePath(file))
 reporter$start_test(context = basename(file), test = file)
 
 if (IS_DEBUG) {
-  .vsc.debugSource('/home/kubajal/development/vscode-r-test-adapter/test/testRepo/inst/tinytest/test-arithmetic.R')
+  .vsc.debugSource(file)
 } else {
-  results <- tinytest::run_test_file('/home/kubajal/development/vscode-r-test-adapter/test/testRepo/inst/tinytest/test-arithmetic.R', verbose=2)
+  results <- tinytest::run_test_file(file, verbose=2)
   df <- as.data.frame(results)
   for (i in seq_len(nrow(df))) {
     row <- df[i, ]
