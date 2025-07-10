@@ -38,9 +38,4 @@ export async function tinytestWatcherFactory(
     return watcher;
 }
 
-const _unittestable = {
-    getOrCreateFile,
-};
-
 export default tinytestWatcherFactory;
-export { _unittestable };
