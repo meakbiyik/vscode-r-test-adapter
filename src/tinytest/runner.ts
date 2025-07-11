@@ -61,10 +61,13 @@ reporter$start_file(normalizePath(FILE))
 reporter$start_test(context = basename(FILE), test = FILE)
 
 if (IS_DEBUG) {
-  # We are in the debug mode. We need to .vsc.debugSource so breakpoints are respected.
-  # Because .vsc.debugSource doesn't expose any other hooks and we need to somehow emit VSCode Reporter JSONs,
-  # we need to hack tinytest::tinytest. It is the internal function
-  # that gets called by all tinytest::expect_* functions.
+  # We are in the debug mode. We need to .vsc.debugSource so breakpoints are
+  # respected.
+  # Because .vsc.debugSource doesn't expose any other hooks and we need to
+  # somehow emit VSCode Reporter JSONs. We need to hack tinytest::tinytest for
+  # that. It is the internal function that gets called by all tinytest::expect_*
+  # functions. This hack works only in the Debug mode as only then locations
+  # of failures are non-NA.
   orig_tinytest <- tinytest::tinytest
   new_tinytest <- function(...) {
     args <- list(...)
@@ -79,7 +82,9 @@ if (IS_DEBUG) {
   library(tinytest)
   .vsc.debugSource(FILE)
 } else {
-  # If we are in non-debug mode, we need to first run tests and then parse their results
+  # If we are in non-debug mode, we need to first run tests and then parse their
+  # results. Using tinytest::tinytest hack won't work because in non-debug mode,
+  # the failure locations are not available yet.
   devtools::load_all('${workspaceFolder}')
   results <- tinytest::run_test_file(FILE, verbose=2)
   df <- as.data.frame(results)
