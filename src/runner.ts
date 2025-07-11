@@ -4,7 +4,7 @@ import runTest, { testthatEntryPoint as testthatGetEntryPointSource } from './te
 import { tinytestEntryPoint as tinytestGetEntryPointSource } from './tinytest/runner';
 
 function buildTestRunner(
-    entryProvider: EntryPointSourceProvider,
+    entryPoint: EntryPointSourceProvider,
     shouldHighlightOutput: boolean
 ): TestRunner {
     return (
@@ -12,7 +12,7 @@ function buildTestRunner(
         run: vscode.TestRun,
         item: vscode.TestItem,
         isDebug: boolean
-    ) => runTest(tools, run, item, isDebug, shouldHighlightOutput, entryProvider);
+    ) => runTest(tools, run, item, isDebug, shouldHighlightOutput, entryPoint);
 }
 
 export const runTestthatTest = buildTestRunner(testthatGetEntryPointSource, false);
