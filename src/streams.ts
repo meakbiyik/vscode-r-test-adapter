@@ -118,7 +118,6 @@ class VSCodeEventStream extends EventEmitter {
                                 }
                                 if (data.message) {
                                     if (shouldHighlightOutput && data.location) {
-                                        // This if path is used by tinytest.
                                         // As tinytest doesn't have a concept of 'named tests' (it just uses file+line number to identify successful&failing assertions)
                                         // we extract the 'location' field from VSCode Reporter JSONs and in case of failures we append the assertion message
                                         // to the corresponding line so the user sees the failures in a readable way.
