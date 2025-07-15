@@ -1,4 +1,4 @@
-import runTest from "../../../src/testthat/runner";
+import { runTestthatTest } from "../../../src/runner";
 import * as utils from "../../../src/util";
 import parseTestsFromFile from "../../../src/testthat/parser";
 import * as chai from "chai";
@@ -47,7 +47,7 @@ suite("testthat/runner", () => {
             true
         );
         const run = testingTools.controller.createTestRun(new vscode.TestRunRequest([TestItem]));
-        let stdout = await runTest(testingTools, run, TestItem);
+        let stdout = await runTestthatTest(testingTools, run, TestItem, false);
 
         let fail_count = (stdout.match(/"result":"failure"/g) || []).length;
         let pass_count = (stdout.match(/"result":"success"/g) || []).length;
@@ -65,7 +65,7 @@ suite("testthat/runner", () => {
             true
         );
         const run = testingTools.controller.createTestRun(new vscode.TestRunRequest([TestItem]));
-        let stdout = await runTest(testingTools, run, TestItem);
+        let stdout = await runTestthatTest(testingTools, run, TestItem, false);
 
         let fail_count = (stdout.match(/"result":"failure"/g) || []).length;
         let pass_count = (stdout.match(/"result":"success"/g) || []).length;
@@ -81,7 +81,7 @@ suite("testthat/runner", () => {
             true
         );
         const run = testingTools.controller.createTestRun(new vscode.TestRunRequest([TestItem]));
-        let stdout = await runTest(testingTools, run, TestItem);
+        let stdout = await runTestthatTest(testingTools, run, TestItem, false);
 
         let fail_count = (stdout.match(/"result":"failure"/g) || []).length;
         let pass_count = (stdout.match(/"result":"success"/g) || []).length;
@@ -107,7 +107,7 @@ suite("testthat/runner", () => {
         const run = testingTools.controller.createTestRun(
             new vscode.TestRunRequest([ChildTestItem])
         );
-        let stdout = await runTest(testingTools, run, ChildTestItem);
+        let stdout = await runTestthatTest(testingTools, run, ChildTestItem, false);
 
         let fail_count = (stdout.match(/"result":"failure"/g) || []).length;
         let pass_count = (stdout.match(/"result":"success"/g) || []).length;
@@ -133,7 +133,7 @@ suite("testthat/runner", () => {
         const run = testingTools.controller.createTestRun(
             new vscode.TestRunRequest([ChildTestItem])
         );
-        let stdout = await runTest(testingTools, run, ChildTestItem);
+        let stdout = await runTestthatTest(testingTools, run, ChildTestItem, false);
 
         let fail_count = (stdout.match(/"result":"failure"/g) || []).length;
         let pass_count = (stdout.match(/"result":"success"/g) || []).length;
@@ -159,7 +159,7 @@ suite("testthat/runner", () => {
         const run = testingTools.controller.createTestRun(
             new vscode.TestRunRequest([ChildTestItem])
         );
-        let stdout = await runTest(testingTools, run, ChildTestItem);
+        let stdout = await runTestthatTest(testingTools, run, ChildTestItem, false);
 
         let fail_count = (stdout.match(/"result":"failure"/g) || []).length;
         let pass_count = (stdout.match(/"result":"success"/g) || []).length;

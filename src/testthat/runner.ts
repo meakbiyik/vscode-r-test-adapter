@@ -1,77 +1,13 @@
-import * as util from "util";
 import * as path from "path";
-import * as tmp from "tmp-promise";
 import * as vscode from "vscode";
-import { EntryPointSourceProvider } from "../util";
-import { DebugChannel, ProcessChannel } from "../streams"; // Adjust the path as needed
-import { getDevtoolsVersion, getRscriptCommand, ItemType, TestingTools } from "../util";
+import { getDevtoolsVersion, getRscriptCommand, TestingTools } from "../util";
 import { appendFile as _appendFile } from "fs";
-import { v4 as uuid } from "uuid";
 
-const appendFile = util.promisify(_appendFile);
 const testReporterPath = path
     .join(__dirname, "..", "..", "..", "src", "testthat", "reporter")
     .replace(/\\/g, "/");
 const workspaceFolder = vscode.workspace.workspaceFolders![0].uri.fsPath
     .replace(/\\/g, "/");
-
-async function runTest(
-    testingTools: TestingTools,
-    run: vscode.TestRun,
-    test: vscode.TestItem,
-    isDebugMode: boolean = false,
-    shouldHighlightOutput: boolean = false,
-    getEntryPointSource: EntryPointSourceProvider = testthatEntryPoint
-): Promise<string> {
-    const getType = (testItem: vscode.TestItem) =>
-        testingTools.testItemData.get(testItem)!.itemType;
-
-    let isWholeFile = getType(test) === ItemType.File;
-    const source = await getEntryPointSource(testingTools, test, isDebugMode, isWholeFile);
-
-    const testRunId = uuid();
-    let tmpFileName = `test-${testRunId}.loader`;
-    let tmpFilePath = path.normalize(path.join(path.dirname(test.uri!.fsPath), tmpFileName));
-    // Do not clean up tempFilePaths, not possible to get around the race condition
-    testingTools.tempFilePaths.push(tmpFilePath);
-    // cleanup is not guaranteed to unlink the file immediately
-    let tmpFileResult = await tmp.file({
-        name: tmpFileName,
-        tmpdir: path.dirname(test.uri!.fsPath),
-    });
-
-    await appendFile(tmpFilePath, source);
-
-    return executeTest(testingTools, run, test, tmpFilePath, isDebugMode, shouldHighlightOutput)
-        .catch(async (err) => {
-            await tmpFileResult.cleanup();
-            throw err;
-        })
-        .then(async (value) => {
-            await tmpFileResult.cleanup();
-            return value;
-        });
-}
-
-export async function executeTest(
-    testingTools: TestingTools,
-    run: vscode.TestRun,
-    test: vscode.TestItem,
-    filePath: string,
-    isDebugMode: boolean,
-    shouldHighlightOutput: boolean = false
-): Promise<string> {
-    let cleanFilePath = filePath.replace(/\\/g, "/");
-    let RscriptCommand = await getRscriptCommand(testingTools);
-    let command = `${RscriptCommand} ${filePath}`;
-    let cwd = vscode.workspace.workspaceFolders![0];
-
-    // Use DebugChannel for debug mode to capture detailed debugging information,
-    // and ProcessChannel for normal mode to execute the test script as a subprocess.
-    let eventStream = isDebugMode ? new DebugChannel(testingTools, cwd, cleanFilePath) : new ProcessChannel(command, cwd);
-    return eventStream.start(run, test, isDebugMode, shouldHighlightOutput);
-
-}
 
 // This function returns the 'entry point' for the R test.
 // The entry point hacks the testthat package to disable any other test.
@@ -169,7 +105,3 @@ if (IS_DEBUG) {
 }
 `;
 }
-
-
-export default runTest;
-
