@@ -73,4 +73,5 @@ and [runTinytestTest](./runner.ts) for fundamental differences. They are created
  their corresponding lines as comments. We need this feature because `tinytest`
  doesn't have a concept of 'named tests' (it just uses file+line number to identify
  successful&failing assertions). See the image below.
- ![shouldHighlightOutput](./img/tinytest-vs-testthat.jpg)
+
+![shouldHighlightOutput](./img/tinytest_testthat.png)
