@@ -93,10 +93,15 @@ class VSCodeEventStream extends EventEmitter {
                                 let color = ANSI.reset;
                                 switch (data.result) {
                                     case "success":
-                                    case "warning":
                                         run.passed(testItem!, duration);
                                         break;
+                                    case "warning":
+                                        data.message = "Warning: " + data.message!;
+                                        run.failed(testItem!, new vscode.TestMessage(data.message!), duration);
+                                        color = ANSI.red;
+                                        break;
                                     case "failure":
+                                        data.message = "Failure: " + data.message!;
                                         run.failed(
                                             testItem!,
                                             new vscode.TestMessage(data.message!),
@@ -108,9 +113,10 @@ class VSCodeEventStream extends EventEmitter {
                                         run.skipped(testItem!);
                                         break;
                                     case "error":
+                                        data.message = "Error: " + data.message!;
                                         run.errored(
                                             testItem!,
-                                            new vscode.TestMessage(data.message!),
+                                            new vscode.TestMessage("Error: " + data.message!),
                                             duration
                                         );
                                         color = ANSI.red;

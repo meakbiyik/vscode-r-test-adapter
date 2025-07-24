@@ -77,7 +77,7 @@ expectation_error   <- function(exp) expectation_type(exp) == "error"
 expectation_skip    <- function(exp) expectation_type(exp) == "skip"
 expectation_warning <- function(exp) expectation_type(exp) == "warning"
 expectation_broken  <- function(exp) expectation_failure(exp) || expectation_error(exp)
-expectation_requires_message  <- function(exp) expectation_broken(exp) || expectation_skip(exp)
+expectation_requires_message  <- function(exp) expectation_broken(exp) || expectation_skip(exp) || expectation_warning(exp)
 expectation_ok      <- function(exp) expectation_type(exp) %in% c("success", "warning")
 
 expectation_message <- function(x) {

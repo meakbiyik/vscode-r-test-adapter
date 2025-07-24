@@ -49,3 +49,6 @@ expect_silent(error("there is no error and no warning"))
 
 expect_stdout(print("hello"), "hello")
 expect_stdout(1+1, "output should be empty")
+
+report_side_effects()
+Sys.setenv(hihi="lol")

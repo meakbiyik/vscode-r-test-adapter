@@ -45,7 +45,7 @@ emit_JSON_result <- function(call, result, diff, range) {
 
   cls  <- if (isTRUE(result))         "expectation_success"
           else if (isFALSE(result))   "expectation_failure"
-          else                        "expectation_skip"   # side effect
+          else                        "expectation_warning"   # side effect
 
   exp  <- structure(
     list(message = if (!isTRUE(result)) diff else NULL,
