@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { encodeNodeId } from "./util";
+import { encodeNodeId } from "../util";
 import { ItemFramework, ItemType, TestingTools } from "../util";
 
 const wasmPath = path.join(__dirname, "..", "..", "..", "bin", "tree-sitter-r.wasm");

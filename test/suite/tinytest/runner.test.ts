@@ -1,6 +1,5 @@
-import { runTestthatTest } from "../../../src/runner";
+import { runTinytestTest } from "../../../src/runner";
 import * as utils from "../../../src/util";
-import parseTestsFromFile from "../../../src/testthat/parser";
 import * as chai from "chai";
 import * as deepEqualInAnyOrder from "deep-equal-in-any-order";
 import * as chaiAsPromised from "chai-as-promised";
@@ -14,9 +13,9 @@ chai.use(chaiAsPromised);
 chai.use(deepEqualInAnyOrder);
 
 const testRepoPath = path.join(__dirname, "..", "..", "..", "..", "test", "testRepo");
-const testRepoTestsPath = path.join(testRepoPath, "tests", "testthat");
+const testRepoTestsPath = path.join(testRepoPath, "inst", "tinytest");
 
-suite("testthat/runner", () => {
+suite("tinytest/runner", () => {
     const controller = vscode.tests.createTestController("fake-controller", "Fake Controller");
     const workspaceFolder = <vscode.WorkspaceFolder>{
         uri: vscode.Uri.file(testRepoPath),
@@ -39,15 +38,69 @@ suite("testthat/runner", () => {
         context: <vscode.ExtensionContext>{},
     };
 
-    test("Single test file run for pass", async () => {
+    test("Single test file run test-email.R", async () => {
         const TestItem = utils._unittestable.getOrCreateFile(
-            ItemFramework.Testthat,
+            ItemFramework.Tinytest,
             testingTools,
-            vscode.Uri.file(path.join(testRepoTestsPath, "test-memoize.R")),
-            true
+            vscode.Uri.file(path.join(testRepoTestsPath, "test-email.R")),
+            false
         );
         const run = testingTools.controller.createTestRun(new vscode.TestRunRequest([TestItem]));
-        let stdout = await runTestthatTest(testingTools, run, TestItem, false);
+        let stdout = await runTinytestTest(testingTools, run, TestItem, false);
+
+        let fail_count = (stdout.match(/"result":"failure"/g) || []).length;
+        let pass_count = (stdout.match(/"result":"success"/g) || []).length;
+        let skip_count = (stdout.match(/"result":"skip"/g) || []).length;
+        expect(fail_count).to.be.equal(0);
+        expect(pass_count).to.be.equal(4);
+        expect(skip_count).to.be.equal(0);
+    });
+
+    test("Single test file run test-fallbacks.R", async () => {
+        const TestItem = utils._unittestable.getOrCreateFile(
+            ItemFramework.Tinytest,
+            testingTools,
+            vscode.Uri.file(path.join(testRepoTestsPath, "test-fallbacks.R")),
+            false
+        );
+        const run = testingTools.controller.createTestRun(new vscode.TestRunRequest([TestItem]));
+        let stdout = await runTinytestTest(testingTools, run, TestItem, false);
+
+        let fail_count = (stdout.match(/"result":"failure"/g) || []).length;
+        let pass_count = (stdout.match(/"result":"success"/g) || []).length;
+        let skip_count = (stdout.match(/"result":"skip"/g) || []).length;
+        expect(fail_count).to.be.equal(1);
+        expect(pass_count).to.be.equal(4);
+        expect(skip_count).to.be.equal(0);
+    });
+
+    test("Single test file run test-fullname.R", async () => {
+        const TestItem = utils._unittestable.getOrCreateFile(
+            ItemFramework.Tinytest,
+            testingTools,
+            vscode.Uri.file(path.join(testRepoTestsPath, "test-fullname.R")),
+            false
+        );
+        const run = testingTools.controller.createTestRun(new vscode.TestRunRequest([TestItem]));
+        let stdout = await runTinytestTest(testingTools, run, TestItem, false);
+
+        let fail_count = (stdout.match(/"result":"failure"/g) || []).length;
+        let pass_count = (stdout.match(/"result":"success"/g) || []).length;
+        let skip_count = (stdout.match(/"result":"skip"/g) || []).length;
+        expect(fail_count).to.be.equal(0);
+        expect(pass_count).to.be.equal(2);
+        expect(skip_count).to.be.equal(0);
+    });
+
+    test("Single test file run test-memoize.R", async () => {
+        const TestItem = utils._unittestable.getOrCreateFile(
+            ItemFramework.Tinytest,
+            testingTools,
+            vscode.Uri.file(path.join(testRepoTestsPath, "test-memoize.R")),
+            false
+        );
+        const run = testingTools.controller.createTestRun(new vscode.TestRunRequest([TestItem]));
+        let stdout = await runTinytestTest(testingTools, run, TestItem, false);
 
         let fail_count = (stdout.match(/"result":"failure"/g) || []).length;
         let pass_count = (stdout.match(/"result":"success"/g) || []).length;
@@ -57,116 +110,42 @@ suite("testthat/runner", () => {
         expect(skip_count).to.be.equal(0);
     });
 
-    test("Single test file run for fail", async () => {
+    test("Single test file run test-username.R", async () => {
         const TestItem = utils._unittestable.getOrCreateFile(
-            ItemFramework.Testthat,
+            ItemFramework.Tinytest,
             testingTools,
-            vscode.Uri.file(path.join(testRepoTestsPath, "test-fallbacks.R")),
-            true
+            vscode.Uri.file(path.join(testRepoTestsPath, "test-username.R")),
+            false
         );
         const run = testingTools.controller.createTestRun(new vscode.TestRunRequest([TestItem]));
-        let stdout = await runTestthatTest(testingTools, run, TestItem, false);
-
-        let fail_count = (stdout.match(/"result":"failure"/g) || []).length;
-        let pass_count = (stdout.match(/"result":"success"/g) || []).length;
-        expect(fail_count).to.be.equal(1);
-        expect(pass_count).to.be.equal(4);
-    });
-
-    test("Single test file run for skip", async () => {
-        const TestItem = utils._unittestable.getOrCreateFile(
-            ItemFramework.Testthat,
-            testingTools,
-            vscode.Uri.file(path.join(testRepoTestsPath, "test-email.R")),
-            true
-        );
-        const run = testingTools.controller.createTestRun(new vscode.TestRunRequest([TestItem]));
-        let stdout = await runTestthatTest(testingTools, run, TestItem, false);
+        let stdout = await runTinytestTest(testingTools, run, TestItem, false);
 
         let fail_count = (stdout.match(/"result":"failure"/g) || []).length;
         let pass_count = (stdout.match(/"result":"success"/g) || []).length;
         let skip_count = (stdout.match(/"result":"skip"/g) || []).length;
         expect(fail_count).to.be.equal(0);
-        expect(pass_count).to.be.equal(2);
-        expect(skip_count).to.be.equal(2);
-    });
-
-    test("Single test run for pass", async () => {
-        const TestItem = utils._unittestable.getOrCreateFile(
-            ItemFramework.Testthat,
-            testingTools,
-            vscode.Uri.file(path.join(testRepoTestsPath, "test-memoize.R")),
-            true
-        );
-        await parseTestsFromFile(testingTools, TestItem);
-        const childrens: string[] = [];
-        TestItem.children.forEach((test, collection) => {
-            childrens.push(test.id);
-        });
-        const ChildTestItem = TestItem.children.get(childrens[0])!;
-        const run = testingTools.controller.createTestRun(
-            new vscode.TestRunRequest([ChildTestItem])
-        );
-        let stdout = await runTestthatTest(testingTools, run, ChildTestItem, false);
-
-        let fail_count = (stdout.match(/"result":"failure"/g) || []).length;
-        let pass_count = (stdout.match(/"result":"success"/g) || []).length;
-        let skip_count = (stdout.match(/"result":"skip"/g) || []).length;
-        expect(fail_count).to.be.equal(0);
-        expect(pass_count).to.be.equal(2);
+        expect(pass_count).to.be.equal(1);
         expect(skip_count).to.be.equal(0);
     });
 
-    test("Single test run for fail", async () => {
+    test("General purpose tinytest keywoard coverage", async () => {
         const TestItem = utils._unittestable.getOrCreateFile(
-            ItemFramework.Testthat,
+            ItemFramework.Tinytest,
             testingTools,
-            vscode.Uri.file(path.join(testRepoTestsPath, "test-fallbacks.R")),
-            true
+            vscode.Uri.file(path.join(testRepoTestsPath, "test-check-keywords.R")),
+            false
         );
-        await parseTestsFromFile(testingTools, TestItem);
-        const childrens: string[] = [];
-        TestItem.children.forEach((test, collection) => {
-            childrens.push(test.id);
-        });
-        const ChildTestItem = TestItem.children.get(childrens[0])!;
-        const run = testingTools.controller.createTestRun(
-            new vscode.TestRunRequest([ChildTestItem])
-        );
-        let stdout = await runTestthatTest(testingTools, run, ChildTestItem, false);
+        const run = testingTools.controller.createTestRun(new vscode.TestRunRequest([TestItem]));
+        let stdout = await runTinytestTest(testingTools, run, TestItem, false);
 
         let fail_count = (stdout.match(/"result":"failure"/g) || []).length;
         let pass_count = (stdout.match(/"result":"success"/g) || []).length;
         let skip_count = (stdout.match(/"result":"skip"/g) || []).length;
-        expect(fail_count).to.be.equal(1);
-        expect(pass_count).to.be.equal(0);
+        let warn_count = (stdout.match(/"result":"warning"/g) || []).length;
+        expect(fail_count).to.be.equal(14);
+        expect(pass_count).to.be.equal(14);
         expect(skip_count).to.be.equal(0);
-    });
-
-    test("Single test run for skip", async () => {
-        const TestItem = utils._unittestable.getOrCreateFile(
-            ItemFramework.Testthat,
-            testingTools,
-            vscode.Uri.file(path.join(testRepoTestsPath, "test-email.R")),
-            true
-        );
-        await parseTestsFromFile(testingTools, TestItem);
-        const childrens: string[] = [];
-        TestItem.children.forEach((test, collection) => {
-            childrens.push(test.id);
-        });
-        const ChildTestItem = TestItem.children.get(childrens[0])!;
-        const run = testingTools.controller.createTestRun(
-            new vscode.TestRunRequest([ChildTestItem])
-        );
-        let stdout = await runTestthatTest(testingTools, run, ChildTestItem, false);
-
-        let fail_count = (stdout.match(/"result":"failure"/g) || []).length;
-        let pass_count = (stdout.match(/"result":"success"/g) || []).length;
-        let skip_count = (stdout.match(/"result":"skip"/g) || []).length;
-        expect(fail_count).to.be.equal(0);
-        expect(pass_count).to.be.equal(0);
-        expect(skip_count).to.be.equal(1);
+        expect(warn_count).to.be.equal(1);  // warning generated by side effects
     });
 
     controller.dispose();
