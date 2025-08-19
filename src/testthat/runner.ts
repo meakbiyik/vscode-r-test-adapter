@@ -6,8 +6,6 @@ import { appendFile as _appendFile } from "fs";
 const testReporterPath = path
     .join(__dirname, "..", "..", "..", "src", "testthat", "reporter")
     .replace(/\\/g, "/");
-const workspaceFolder = vscode.workspace.workspaceFolders![0].uri.fsPath
-    .replace(/\\/g, "/");
 
 // This function returns the 'entry point' for the R test.
 // The entry point hacks the testthat package to disable any other test.
@@ -40,8 +38,8 @@ export async function testthatEntryPoint(
         isDescribe = true;
     }
     const testLabel = test?.label;
-    const testPath = test?.uri!.fsPath
-        .replace(/\\/g, "/");
+    const testPath = test?.uri!.fsPath.replace(/\\/g, "/");
+    let workspaceFolder = vscode.workspace.getWorkspaceFolder(test.uri!)!.uri.fsPath.replace(/\\/g, "/");
 
     return `
 # NOTE! This file has been generated automatically by the VSCode R Test Adapter. Modification has no effect.
