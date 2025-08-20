@@ -39,6 +39,8 @@ export async function testthatEntryPoint(
         test = test.parent;
         isDescribe = true;
     }
+    let config = vscode.workspace.getConfiguration("RTestAdapter");
+    const packages = config.get<string[]>("packages")!;
     const testLabel = test?.label;
     const testPath = test?.uri!.fsPath
         .replace(/\\/g, "/");
@@ -51,6 +53,8 @@ export async function testthatEntryPoint(
 # Please report any unwanted effects at https://github.com/meakbiyik/vscode-r-test-adapter/issues.
 
 # Entry point for the '${test.id}' test follows...
+
+${packages.map((x) => `library(${x})"\r\n"`).join(", ")}
 
 TEST_THAT <- "test_that"
 DESCRIBE <- "describe"
@@ -103,5 +107,5 @@ if (IS_DEBUG) {
     devtools::load_all('${workspaceFolder}')
     devtools::${devtoolsMethod}('${testPath}', reporter=VSCodeReporter)
 }
-`;
+    `;
 }

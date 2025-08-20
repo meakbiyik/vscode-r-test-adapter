@@ -16,6 +16,8 @@ export async function tinytestEntryPoint(
     .replace(/\\/g, "/");
   const workspaceFolder = vscode.workspace.workspaceFolders![0].uri.fsPath
     .replace(/\\/g, "/");
+  let config = vscode.workspace.getConfiguration("RTestAdapter");
+  const packages = config.get<string[]>("packages")!;
   return `
 
 # NOTE! This file has been generated automatically by the VSCode R Test Adapter. Modification has no effect.
@@ -24,6 +26,8 @@ export async function tinytestEntryPoint(
 # Please report any unwanted effects at https://github.com/meakbiyik/vscode-r-test-adapter/issues.
 
 # Entry point for the '${test.id}' test follows...
+
+${packages.map((x) => `library(${x})"\r\n"`).join(", ")}
 
 TINYTEST <- "tinytest"
 IS_DEBUG <- ${Number(isDebug)}
@@ -61,12 +65,12 @@ reporter$start_file(normalizePath(FILE))
 reporter$start_test(context = basename(FILE), test = FILE)
 
 if (IS_DEBUG) {
-  # We are in the debug mode. We need to .vsc.debugSource so breakpoints are
-  # respected.
-  # Because .vsc.debugSource doesn't expose any other hooks and we need to
+  # We are in the debug mode. We need to execute .vsc.debugSource
+  # so breakpoints are loaded.
+  # The .vsc.debugSource function doesn't expose any hooks but we need to
   # somehow emit VSCode Reporter JSONs. We need to hack tinytest::tinytest for
   # that. It is the internal function that gets called by all tinytest::expect_*
-  # functions. This hack works only in the Debug mode as only then locations
+  # functions. This hack works only in the debug mode as only then locations
   # of failures are non-NA.
   orig_tinytest <- tinytest::tinytest
   new_tinytest <- function(...) {

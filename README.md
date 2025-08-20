@@ -11,6 +11,28 @@ Additionally, in order to debug tests, you will need to install:
  1. the [R Debugger extension](https://marketplace.visualstudio.com/items/?itemName=RDebugger.r-debugger)
  2. the [vscDebugger](https://github.com/ManuelHentschel/vscDebugger) package in R
 
-Only the following file paths are searched for tests (TODO: add .vscode/settings.json options to specify that):
- - `tinytest`: `"**/inst/tinytest/**/test*.R"`
- - `testthat`: `"**/tests/testthat/**/test*.R"`
+## Configuration
+
+The following list of parameters are supported in .vscode/settings.json.
+
+#### Test search paths
+
+The following two options define where to look for tests relative to the current workspace folder.
+After modifying those entries, please use the 'Rediscover tests' button in the top of the Testing Tab.
+
+```json
+{
+    "RTestAdapter.testthatSearchPath": "**/tests/testthat/**/test*.R",  // default
+    "RTestAdapter.tinytestSearchPath": "**/inst/tinytest/**/test*.R"    // default
+}
+```
+
+#### Additional R packages
+
+The extension will load additional R packages listed in the following array.
+The libraries need to be available locally in the R search path.
+```json
+{
+    "RTestAdapter.packages": ["stringr"]    // example
+}
+```

@@ -1,8 +1,11 @@
 import * as vscode from "vscode";
-import { ItemFramework, ItemType, TestingTools } from "./util";
-import { discoverTestFiles, loadTestsFromFile } from "./loader";
+import { ItemFramework, ItemType, rediscover, TestingTools } from "./util";
+import { loadTestsFromFile } from "./loader";
 import { Log } from "vscode-test-adapter-util";
 import { runHandler } from "./runner";
+
+let _testingTools: TestingTools;
+export function getTestingTools() { return _testingTools; }
 
 export async function activate(context: vscode.ExtensionContext) {
     const workspaceFolder = (vscode.workspace.workspaceFolders || [])[0];
@@ -25,22 +28,22 @@ export async function activate(context: vscode.ExtensionContext) {
         tempFilePaths,
         context
     };
+    _testingTools = testingTools;
 
     // Custom handler for loading tests. The "test" argument here is undefined,
     // but if we supported lazy-loading child test then this could be called with
     // the test whose children VS Code wanted to load.
     controller.resolveHandler = async (test) => {
         if (!test) {
-            log.info("Discovering test files started.");
-            let watcherLists = await discoverTestFiles(testingTools);
-            for (const watchers of watcherLists) {
-                context.subscriptions.push(...watchers);
-            }
-            log.info("Discovering test files finished.");
+            await rediscover(testingTools);
         } else {
             await loadTestsFromFile(testingTools, test);
         }
     };
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('RTestAdapter.rediscover', () => rediscover(testingTools))
+    );
 
     // We'll create the "run" type profile here, and give it the function to call.
     // You can also create debug and coverage profile types. The last `true` argument
