@@ -6,8 +6,6 @@ import { appendFile as _appendFile } from "fs";
 const testReporterPath = path
     .join(__dirname, "..", "..", "..", "src", "testthat", "reporter")
     .replace(/\\/g, "/");
-const workspaceFolder = vscode.workspace.workspaceFolders![0].uri.fsPath
-    .replace(/\\/g, "/");
 
 // This function returns the 'entry point' for the R test.
 // The entry point hacks the testthat package to disable any other test.
@@ -40,7 +38,10 @@ export async function testthatEntryPoint(
         isDescribe = true;
     }
     let config = vscode.workspace.getConfiguration("RTestAdapter");
-    const packages = config.get<string[]>("packages")!;
+    let rRootPackage: string = config.get<string>("RPackageRoot")!;
+    if (rRootPackage == "") {
+        rRootPackage = vscode.workspace.workspaceFolders![0].uri.fsPath.replace(/\\/g, "/");
+    }
     const testLabel = test?.label;
     const testPath = test?.uri!.fsPath
         .replace(/\\/g, "/");
@@ -53,8 +54,6 @@ export async function testthatEntryPoint(
 # Please report any unwanted effects at https://github.com/meakbiyik/vscode-r-test-adapter/issues.
 
 # Entry point for the '${test.id}' test follows...
-
-${packages.map((x) => `library(${x})"\r\n"`).join(", ")}
 
 TEST_THAT <- "test_that"
 DESCRIBE <- "describe"
@@ -99,12 +98,12 @@ if (!IS_WHOLE_FILE_TEST) {
 library(devtools)
 devtools::load_all('${testReporterPath}')
 if (IS_DEBUG) {
-    .vsc.load_all('${workspaceFolder}')
+    .vsc.load_all('${rRootPackage}')
     with_reporter(VSCodeReporter, {
         .vsc.debugSource('${testPath}')
     })
 } else {
-    devtools::load_all('${workspaceFolder}')
+    devtools::load_all('${rRootPackage}')
     devtools::${devtoolsMethod}('${testPath}', reporter=VSCodeReporter)
 }
     `;

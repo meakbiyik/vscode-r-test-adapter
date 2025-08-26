@@ -1,17 +1,10 @@
 import * as vscode from "vscode";
 import { expect } from "chai";
 import { getTestingTools } from "../../src/main";
-import { ItemFramework, rediscover } from "../../src/util";
-import { testthatEntryPoint } from "../../src/testthat/runner";
-import * as utils from "../../src/util";
-import * as path from "path";
-import { tinytestEntryPoint } from "../../src/tinytest/runner";
+import { rediscover } from "../../src/util";
 
 const ext = vscode.extensions.getExtension('meakbiyik.vscode-r-test-adapter');
 let config = vscode.workspace.getConfiguration("RTestAdapter");
-const testRepoPath = path.join(__dirname, "..", "..", "..", "..", "test", "testRepo");
-const testthatPath = path.join(testRepoPath, "tests", "testthat");
-const tinytestPath = path.join(testRepoPath, "inst", "tinytest");
 
 suite("end to end testing", () => {
 
@@ -40,12 +33,12 @@ suite("end to end testing", () => {
         await rediscover(testingTools);
         expect(testingTools.controller.items.size).to.be.equal(0);
 
+        // clean up of options
         await config.update(
             'testthatSearchPath',
             undefined,
             vscode.ConfigurationTarget.Workspace
         );
-
         await config.update(
             'tinytestSearchPath',
             undefined,
@@ -61,35 +54,20 @@ suite("end to end testing", () => {
         await ext!.activate();
         let testingTools = getTestingTools();
 
-        // === testthat ===
         await config.update(
-            'packages',
-            ["stringr"],
+            "RPackageRoot",
+            "../testRepo",  // faking some path but effectively pointing to the original R package
             vscode.ConfigurationTarget.Workspace
         );
-        const testthatTest = utils._unittestable.getOrCreateFile(
-            ItemFramework.Testthat,
-            testingTools,
-            vscode.Uri.file(path.join(testthatPath, "test-memoize.R")),
-            true
-        );
-        const testthatEntry = await testthatEntryPoint(testingTools, testthatTest, false, false);
-        expect(testthatEntry).to.contain("library(stringr)");
+        await rediscover(testingTools);
+        expect(testingTools.controller.items.size).to.be.equal(11);
 
-        // === tinytest ===
-        const tinytestTest = utils._unittestable.getOrCreateFile(
-            ItemFramework.Tinytest,
-            testingTools,
-            vscode.Uri.file(path.join(tinytestPath, "test-memoize.R")),
-            false
-        );
-        const tinytestEntry = await tinytestEntryPoint(testingTools, tinytestTest, false, false);
-        expect(tinytestEntry).to.contain("library(stringr)");
-
+        // clean up of options
         await config.update(
-            'packages',
+            "RPackageRoot",
             undefined,
             vscode.ConfigurationTarget.Workspace
         );
+        expect(testingTools.controller.items.size).to.be.equal(11);
     });
 });

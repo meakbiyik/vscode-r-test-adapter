@@ -146,11 +146,11 @@
           "scope": "resource",
           "default": "**/inst/tinytest/**/test*.R"
         },
-        "RTestAdapter.packages": {
-          "description": "Names of additional R packages to be loaded during tests execution",
-          "type": "array",
+        "RTestAdapter.RPackageRoot": {
+          "description": "Root folder of the R package",
+          "type": "string",
           "scope": "resource",
-          "default": []
+          "default": ""
         }
       }
     }

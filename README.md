@@ -13,26 +13,26 @@ Additionally, in order to debug tests, you will need to install:
 
 ## Configuration
 
-The following list of parameters are supported in .vscode/settings.json.
+The following parameters are supported .vscode/settings.json.
+
+#### R package root
+
+The following option is used `devtools::load_all` in the R code entry point. Empty value means the current workspace
+folder in VSCode.
+
+```json
+{
+    "RTestAdapter.RPackageRoot": "" // default
+}
+```
 
 #### Test search paths
 
 The following two options define where to look for tests relative to the current workspace folder.
 After modifying those entries, please use the 'Rediscover tests' button in the top of the Testing Tab.
-
 ```json
 {
     "RTestAdapter.testthatSearchPath": "**/tests/testthat/**/test*.R",  // default
     "RTestAdapter.tinytestSearchPath": "**/inst/tinytest/**/test*.R"    // default
-}
-```
-
-#### Additional R packages
-
-The extension will load additional R packages listed in the following array.
-The libraries need to be available locally in the R search path.
-```json
-{
-    "RTestAdapter.packages": ["stringr"]    // example
 }
 ```

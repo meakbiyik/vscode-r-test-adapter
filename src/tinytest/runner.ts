@@ -12,12 +12,12 @@ export async function tinytestEntryPoint(
   isDebug: boolean = false,
   isWholeFile: boolean
 ) {
-  const file = test?.uri!.fsPath
-    .replace(/\\/g, "/");
-  const workspaceFolder = vscode.workspace.workspaceFolders![0].uri.fsPath
-    .replace(/\\/g, "/");
+  const file = test?.uri!.fsPath.replace(/\\/g, "/");
   let config = vscode.workspace.getConfiguration("RTestAdapter");
-  const packages = config.get<string[]>("packages")!;
+  let rRootPackage: string = config.get<string>("RPackageRoot")!;
+  if (rRootPackage == "") {
+    rRootPackage = vscode.workspace.workspaceFolders![0].uri.fsPath.replace(/\\/g, "/");
+  }
   return `
 
 # NOTE! This file has been generated automatically by the VSCode R Test Adapter. Modification has no effect.
@@ -26,8 +26,6 @@ export async function tinytestEntryPoint(
 # Please report any unwanted effects at https://github.com/meakbiyik/vscode-r-test-adapter/issues.
 
 # Entry point for the '${test.id}' test follows...
-
-${packages.map((x) => `library(${x})"\r\n"`).join(", ")}
 
 TINYTEST <- "tinytest"
 IS_DEBUG <- ${Number(isDebug)}
@@ -82,14 +80,14 @@ if (IS_DEBUG) {
   unlockBinding(TINYTEST, tinytest)
   assignInNamespace(TINYTEST, new_tinytest, ns = TINYTEST)
   lockBinding(TINYTEST, tinytest)
-  .vsc.load_all('${workspaceFolder}')
+  .vsc.load_all('${rRootPackage}')
   library(tinytest)
   .vsc.debugSource(FILE)
 } else {
   # If we are in non-debug mode, we need to first run tests and then parse their
   # results. Using tinytest::tinytest hack won't work because in non-debug mode,
   # the failure locations are not available yet.
-  devtools::load_all('${workspaceFolder}')
+  devtools::load_all('${rRootPackage}')
   results <- tinytest::run_test_file(FILE, verbose=2)
   df <- as.data.frame(results)
   for (i in seq_len(nrow(df))) {
