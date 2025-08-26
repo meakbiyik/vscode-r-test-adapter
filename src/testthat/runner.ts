@@ -106,5 +106,5 @@ if (IS_DEBUG) {
     devtools::load_all('${rRootPackage}')
     devtools::${devtoolsMethod}('${testPath}', reporter=VSCodeReporter)
 }
-    `;
+`;
 }

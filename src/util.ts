@@ -204,10 +204,13 @@ export async function rediscover(testingTools: TestingTools) {
     let context = testingTools.context;
     let controller = testingTools.controller;
     const toDelete: string[] = [];
+
+    // clean up whatever has been displayed until now (we are rediscovering anyway)
     controller.items.forEach((item) => toDelete.push(item.id));
     for (const id of toDelete) {
         controller.items.delete(id);
     }
+
     try {
         let watcherLists = await discoverTestFiles(testingTools);
         for (const watchers of watcherLists) {

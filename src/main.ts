@@ -4,8 +4,9 @@ import { loadTestsFromFile } from "./loader";
 import { Log } from "vscode-test-adapter-util";
 import { runHandler } from "./runner";
 
-let _testingTools: TestingTools;
-export function getTestingTools() { return _testingTools; }
+// For E2E testing
+let _currentTestingTools: TestingTools;
+export function getTestingTools() { return _currentTestingTools; }
 
 export async function activate(context: vscode.ExtensionContext) {
     const workspaceFolder = (vscode.workspace.workspaceFolders || [])[0];
@@ -28,7 +29,7 @@ export async function activate(context: vscode.ExtensionContext) {
         tempFilePaths,
         context
     };
-    _testingTools = testingTools;
+    _currentTestingTools = testingTools;
 
     // Custom handler for loading tests. The "test" argument here is undefined,
     // but if we supported lazy-loading child test then this could be called with
