@@ -40,7 +40,7 @@ export async function testthatEntryPoint(
     let config = vscode.workspace.getConfiguration("RTestAdapter");
     let rRootPackage: string = config.get<string>("RPackageRoot")!;
     if (rRootPackage == "") {
-        rRootPackage = vscode.workspace.workspaceFolders![0].uri.fsPath.replace(/\\/g, "/");
+        rRootPackage = vscode.workspace.getWorkspaceFolder(test.uri!)!.uri.fsPath.replace(/\\/g, "/");
     }
     const testLabel = test?.label;
     const testPath = test?.uri!.fsPath
