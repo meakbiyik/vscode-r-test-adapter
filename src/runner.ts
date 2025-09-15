@@ -148,7 +148,7 @@ async function runTest(
     let cleanFilePath = tmpFilePath.replace(/\\/g, "/");
     let RscriptCommand = await getRscriptCommand(testingTools);
     let command = `${RscriptCommand} ${tmpFilePath}`;
-    let cwd = vscode.workspace.workspaceFolders![0];
+    let cwd = vscode.workspace.getWorkspaceFolder(test.uri!)!;
 
     // Use DebugChannel for debug mode to capture detailed debugging information,
     // and ProcessChannel for normal mode to execute the test script as a subprocess.

@@ -43,8 +43,8 @@ export async function testthatEntryPoint(
         rRootPackage = vscode.workspace.getWorkspaceFolder(test.uri!)!.uri.fsPath.replace(/\\/g, "/");
     }
     const testLabel = test?.label;
-    const testPath = test?.uri!.fsPath
-        .replace(/\\/g, "/");
+    const testPath = test?.uri!.fsPath.replace(/\\/g, "/");
+    let workspaceFolder = vscode.workspace.getWorkspaceFolder(test.uri!)!.uri.fsPath.replace(/\\/g, "/");
 
     return `
 # NOTE! This file has been generated automatically by the VSCode R Test Adapter. Modification has no effect.
