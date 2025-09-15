@@ -14,8 +14,7 @@ export async function tinytestEntryPoint(
 ) {
   const file = test?.uri!.fsPath
     .replace(/\\/g, "/");
-  const workspaceFolder = vscode.workspace.workspaceFolders![0].uri.fsPath
-    .replace(/\\/g, "/");
+  let workspaceFolder = vscode.workspace.getWorkspaceFolder(test.uri!)!.uri.fsPath.replace(/\\/g, "/");
   return `
 
 # NOTE! This file has been generated automatically by the VSCode R Test Adapter. Modification has no effect.
