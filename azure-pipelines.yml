@@ -41,8 +41,8 @@ steps:
           sudo apt-get update
           sudo apt-get install libcurl4-gnutls-dev libssh2-1-dev libgit2-dev libxml2-dev
           sudo apt-get install r-cran-devtools
-          sudo Rscript -e "install.packages('mockery',repos = 'http://cran.us.r-project.org')"
-          sudo Rscript -e "install.packages('tinytest', repos = 'http://cran.us.r-project.org')"
+          sudo Rscript -e "install.packages('mockery',repos = 'http://cran.r-project.org')"
+          sudo Rscript -e "install.packages('tinytest', repos = 'http://cran.r-project.org')"
       displayName: "Install devtools for Linux"
       condition: eq(variables['Agent.JobName'], 'Job linux')
 
@@ -53,20 +53,20 @@ steps:
           sudo add-apt-repository ppa:marutter/c2d4u
           sudo apt-get update
           sudo apt-get install libcurl4-gnutls-dev libssh2-1-dev libgit2-dev libxml2-dev
-          sudo Rscript -e "install.packages('remotes', repos = 'http://cran.us.r-project.org')"
+          sudo Rscript -e "install.packages('remotes', repos = 'http://cran.r-project.org')"
           sudo Rscript -e "remotes::install_version('devtools', version='2.3.2')"
-          sudo Rscript -e "install.packages('mockery', repos = 'http://cran.us.r-project.org')"
-          sudo Rscript -e "install.packages('tinytest', repos = 'http://cran.us.r-project.org')"
+          sudo Rscript -e "install.packages('mockery', repos = 'http://cran.r-project.org')"
+          sudo Rscript -e "install.packages('tinytest', repos = 'http://cran.r-project.org')"
       displayName: "Install previous version of devtools for Linux"
       condition: eq(variables['Agent.JobName'], 'Job linux-old-devtools')
 
     - bash: |
-          Rscript -e "install.packages('devtools', repos = 'http://cran.us.r-project.org', type='binary');install.packages('mockery',repos = 'http://cran.us.r-project.org', type='binary');install.packages('httr',repos = 'http://cran.us.r-project.org', type='binary'); install.packages('tinytest', repos = 'http://cran.us.r-project.org')"
+          Rscript -e "install.packages('devtools', repos = 'http://cran.r-project.org', type='binary');install.packages('mockery',repos = 'http://cran.r-project.org', type='binary');install.packages('httr',repos = 'http://cran.r-project.org', type='binary'); install.packages('tinytest', repos = 'http://cran.r-project.org')"
       displayName: "Install devtools"
       condition: eq(variables['Agent.OS'], 'Windows_NT')
 
     - bash: |
-          Rscript -e "install.packages('devtools', repos = 'http://cran.us.r-project.org', type='mac.binary');install.packages('mockery',repos = 'http://cran.us.r-project.org', type='mac.binary'); install.packages('tinytest', repos = 'http://cran.us.r-project.org')"
+          Rscript -e "install.packages('devtools', repos = 'http://cran.r-project.org', type='mac.binary');install.packages('mockery',repos = 'http://cran.r-project.org', type='mac.binary'); install.packages('tinytest', repos = 'http://cran.r-project.org')"
       displayName: "Install devtools"
       condition: eq(variables['Agent.OS'], 'Darwin')
 

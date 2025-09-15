@@ -12,9 +12,12 @@ export async function tinytestEntryPoint(
   isDebug: boolean = false,
   isWholeFile: boolean
 ) {
-  const file = test?.uri!.fsPath
-    .replace(/\\/g, "/");
-  let workspaceFolder = vscode.workspace.getWorkspaceFolder(test.uri!)!.uri.fsPath.replace(/\\/g, "/");
+  const file = test?.uri!.fsPath.replace(/\\/g, "/");
+  let config = vscode.workspace.getConfiguration("RTestAdapter");
+  let rRootPackage: string = config.get<string>("RPackageRoot")!;
+  if (rRootPackage == "") {
+    rRootPackage = vscode.workspace.getWorkspaceFolder(test.uri!)!.uri.fsPath.replace(/\\/g, "/");
+  }
   return `
 
 # NOTE! This file has been generated automatically by the VSCode R Test Adapter. Modification has no effect.
@@ -60,12 +63,12 @@ reporter$start_file(normalizePath(FILE))
 reporter$start_test(context = basename(FILE), test = FILE)
 
 if (IS_DEBUG) {
-  # We are in the debug mode. We need to .vsc.debugSource so breakpoints are
-  # respected.
-  # Because .vsc.debugSource doesn't expose any other hooks and we need to
+  # We are in the debug mode. We need to execute .vsc.debugSource
+  # so breakpoints are loaded.
+  # The .vsc.debugSource function doesn't expose any hooks but we need to
   # somehow emit VSCode Reporter JSONs. We need to hack tinytest::tinytest for
   # that. It is the internal function that gets called by all tinytest::expect_*
-  # functions. This hack works only in the Debug mode as only then locations
+  # functions. This hack works only in the debug mode as only then locations
   # of failures are non-NA.
   orig_tinytest <- tinytest::tinytest
   new_tinytest <- function(...) {
@@ -77,14 +80,14 @@ if (IS_DEBUG) {
   unlockBinding(TINYTEST, tinytest)
   assignInNamespace(TINYTEST, new_tinytest, ns = TINYTEST)
   lockBinding(TINYTEST, tinytest)
-  .vsc.load_all('${workspaceFolder}')
+  .vsc.load_all('${rRootPackage}')
   library(tinytest)
   .vsc.debugSource(FILE)
 } else {
   # If we are in non-debug mode, we need to first run tests and then parse their
   # results. Using tinytest::tinytest hack won't work because in non-debug mode,
   # the failure locations are not available yet.
-  devtools::load_all('${workspaceFolder}')
+  devtools::load_all('${rRootPackage}')
   results <- tinytest::run_test_file(FILE, verbose=2)
   df <- as.data.frame(results)
   for (i in seq_len(nrow(df))) {
