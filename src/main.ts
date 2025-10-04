@@ -31,14 +31,14 @@ export async function activate(context: vscode.ExtensionContext) {
     // the test whose children VS Code wanted to load.
 
     controller.refreshHandler = async (token) => {
-        log.info("Discovering test files (refresh) started.");
+        log.info("Refresh: discovering test files started.");
         // optional: clear/replace existing items before rediscovering
         controller.items.replace([]);
         const watcherLists = await discoverTestFiles(testingTools);
         for (const watchers of watcherLists) {
             context.subscriptions.push(...watchers);
         }
-        log.info("Discovering test files (refresh) finished.");
+        log.info("Refresh: discovering test files finished.");
     };
 
     controller.resolveHandler = async (test) => {
@@ -46,8 +46,10 @@ export async function activate(context: vscode.ExtensionContext) {
             await controller.refreshHandler!(new vscode.CancellationTokenSource().token);
             return;
         }
-        // Populate the file’s tests
-        await loadTestsFromFile(testingTools, test);
+        else {
+            // Populate the file’s tests
+            await loadTestsFromFile(testingTools, test);
+        }
     };
 
     // We'll create the "run" type profile here, and give it the function to call.
