@@ -70,63 +70,63 @@ suite("testthat/parser", () => {
             {
                 testLabel: "Email address works",
                 testStartPosition: {
-                    e: 0,
-                    c: 3,
+                    b: 0,
+                    a: 3,
                 },
                 testEndPosition: {
-                    e: 2,
-                    c: 7,
+                    b: 2,
+                    a: 7,
                 },
             },
             {
                 testLabel: "EMAIL env var",
                 testStartPosition: {
-                    e: 0,
-                    c: 9,
+                    b: 0,
+                    a: 9,
                 },
                 testEndPosition: {
-                    e: 2,
-                    c: 13,
+                    b: 2,
+                    a: 13,
                 },
             },
             {
                 testSuperLabel: "Email address",
                 testLabel: "works",
                 testStartPosition: {
-                    e: 2,
-                    c: 16,
+                    b: 2,
+                    a: 16,
                 },
                 testEndPosition: {
-                    e: 4,
-                    c: 20,
+                    b: 4,
+                    a: 20,
                 },
                 testSuperStartPosition: {
-                    e: 0,
-                    c: 15,
+                    b: 0,
+                    a: 15,
                 },
                 testSuperEndPosition: {
-                    e: 2,
-                    c: 27,
+                    b: 2,
+                    a: 27,
                 },
             },
             {
                 testSuperLabel: "Email address",
                 testLabel: "got EMAIL env var",
                 testStartPosition: {
-                    e: 2,
-                    c: 22,
+                    b: 2,
+                    a: 22,
                 },
                 testEndPosition: {
-                    e: 4,
-                    c: 26,
+                    b: 4,
+                    a: 26,
                 },
                 testSuperStartPosition: {
-                    e: 0,
-                    c: 15,
+                    b: 0,
+                    a: 15,
                 },
                 testSuperEndPosition: {
-                    e: 2,
-                    c: 27,
+                    b: 2,
+                    a: 27,
                 },
             },
         ]);
