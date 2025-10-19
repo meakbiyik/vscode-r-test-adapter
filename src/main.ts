@@ -29,15 +29,25 @@ export async function activate(context: vscode.ExtensionContext) {
     // Custom handler for loading tests. The "test" argument here is undefined,
     // but if we supported lazy-loading child test then this could be called with
     // the test whose children VS Code wanted to load.
+
+    controller.refreshHandler = async (token) => {
+        log.info("Refresh: discovering test files started.");
+        // optional: clear/replace existing items before rediscovering
+        controller.items.replace([]);
+        const watcherLists = await discoverTestFiles(testingTools);
+        for (const watchers of watcherLists) {
+            context.subscriptions.push(...watchers);
+        }
+        log.info("Refresh: discovering test files finished.");
+    };
+
     controller.resolveHandler = async (test) => {
         if (!test) {
-            log.info("Discovering test files started.");
-            let watcherLists = await discoverTestFiles(testingTools);
-            for (const watchers of watcherLists) {
-                context.subscriptions.push(...watchers);
-            }
-            log.info("Discovering test files finished.");
-        } else {
+            await controller.refreshHandler!(new vscode.CancellationTokenSource().token);
+            return;
+        }
+        else {
+            // Populate the file’s tests
             await loadTestsFromFile(testingTools, test);
         }
     };
