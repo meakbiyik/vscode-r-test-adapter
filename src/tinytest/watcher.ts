@@ -7,7 +7,9 @@ export async function tinytestWatcherFactory(
     workspaceFolder: vscode.WorkspaceFolder
 ) {
     testingTools.log.info("Registering testthat watchers");
-    const pattern = new vscode.RelativePattern(workspaceFolder, "**/inst/tinytest/**/test*.R");
+    let config = vscode.workspace.getConfiguration("RTestAdapter");
+    let tinytestSearchPath: string | undefined = config.get("tinytestSearchPath");
+    const pattern = new vscode.RelativePattern(workspaceFolder, tinytestSearchPath!);
     const watcher = vscode.workspace.createFileSystemWatcher(pattern);
 
     // Check that tests are not from RCMD and are not temp files
