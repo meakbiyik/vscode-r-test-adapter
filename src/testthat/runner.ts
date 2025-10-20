@@ -37,9 +37,13 @@ export async function testthatEntryPoint(
         test = test.parent;
         isDescribe = true;
     }
+    let config = vscode.workspace.getConfiguration("RTestAdapter");
+    let rRootPackage: string = config.get<string>("RPackageRoot")!;
+    if (rRootPackage == "") {
+        rRootPackage = vscode.workspace.getWorkspaceFolder(test.uri!)!.uri.fsPath.replace(/\\/g, "/");
+    }
     const testLabel = test?.label;
     const testPath = test?.uri!.fsPath.replace(/\\/g, "/");
-    let workspaceFolder = vscode.workspace.getWorkspaceFolder(test.uri!)!.uri.fsPath.replace(/\\/g, "/");
 
     return `
 # NOTE! This file has been generated automatically by the VSCode R Test Adapter. Modification has no effect.
@@ -93,12 +97,12 @@ if (!IS_WHOLE_FILE_TEST) {
 library(devtools)
 devtools::load_all('${testReporterPath}')
 if (IS_DEBUG) {
-    .vsc.load_all('${workspaceFolder}')
+    .vsc.load_all('${rRootPackage}')
     with_reporter(VSCodeReporter, {
         .vsc.debugSource('${testPath}')
     })
 } else {
-    devtools::load_all('${workspaceFolder}')
+    devtools::load_all('${rRootPackage}')
     devtools::${devtoolsMethod}('${testPath}', reporter=VSCodeReporter)
 }
 `;
