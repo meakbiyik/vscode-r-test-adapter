@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased] - xx.xx.xxxx
 
+## [0.9.1] - 27.10.2025
+
+-   Fixed handling of multiple workspace folders (#39) (Thanks to @kubajal)
+-   Enabled the 'refresh tests' button in non-debug builds (#43) (Thanks to @kubajal)
+-   Added 3 new options in .vscode/settings.json for specifying R root package path and testthat/tinytest search paths (#38) (Thanks to @kubajal)
+
 ## [0.9.0] - 25.07.2025
 
 -   Support tinytest framework (Thanks to @kubajal)
@@ -206,7 +212,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   Initial release of the VS Code R Test Explorer extension.
 -   Contains the infrastructure to parse and run R tests written with testthat framework.
 
-[unreleased]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.9.0...HEAD
+[unreleased]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/meakbiyik/vscode-r-test-adapter/compare/v0.7.0...v0.8.0
