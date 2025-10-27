@@ -6,6 +6,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as winreg from "winreg";
 import { spawn } from "child_process";
+import { discoverTestFiles } from "./loader";
 
 export const R_DEBUGGER_EXTENSION_ID = "rdebugger.r-debugger";
 
@@ -199,6 +200,28 @@ export function encodeNodeId(
         : `${normalizedFilePath}&${testLabel}`;
 }
 
+export async function rediscover(testingTools: TestingTools) {
+    let context = testingTools.context;
+    let controller = testingTools.controller;
+    const toDelete: string[] = [];
+
+    // clean up whatever has been displayed until now (we are rediscovering anyway)
+    controller.items.forEach((item) => toDelete.push(item.id));
+    for (const id of toDelete) {
+        controller.items.delete(id);
+    }
+
+    try {
+        let watcherLists = await discoverTestFiles(testingTools);
+        for (const watchers of watcherLists) {
+            context.subscriptions.push(...watchers);
+        }
+        vscode.window.setStatusBarMessage('R Test Adapter: rediscovery complete', 1500);
+    } catch (e) {
+        console.error(e);
+        vscode.window.showErrorMessage('R Test Adapter: rediscovery failed. See console for details.');
+    }
+}
 
 const _unittestable = {
     getOrCreateFile,

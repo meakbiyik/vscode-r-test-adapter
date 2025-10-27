@@ -97,6 +97,23 @@
     "onView:test-explorer"
   ],
   "contributes": {
+    "commands": [
+      {
+        "command": "RTestAdapter.rediscover",
+        "title": "R Test Adapter: rediscover tests",
+        "icon": "$(refresh)",
+        "category": "My Testing"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "RTestAdapter.rediscover",
+          "when": "view == workbench.view.testing",
+          "group": "navigation@1"
+        }
+      ]
+    },
     "configuration": {
       "type": "object",
       "title": "R Test Explorer configuration",
@@ -116,6 +133,24 @@
           "description": "Path to the Rscript binary",
           "type": "string",
           "scope": "resource"
+        },
+        "RTestAdapter.testthatSearchPath": {
+          "description": "Path to the testthat tests",
+          "type": "string",
+          "scope": "resource",
+          "default": "**/tests/testthat/**/test*.R"
+        },
+        "RTestAdapter.tinytestSearchPath": {
+          "description": "Path to the tinytest tests",
+          "type": "string",
+          "scope": "resource",
+          "default": "**/inst/tinytest/**/test*.R"
+        },
+        "RTestAdapter.RPackageRoot": {
+          "description": "Root folder of the R package",
+          "type": "string",
+          "scope": "resource",
+          "default": ""
         }
       }
     }

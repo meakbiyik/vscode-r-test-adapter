@@ -1,8 +1,12 @@
 import * as vscode from "vscode";
-import { ItemFramework, ItemType, TestingTools } from "./util";
+import { ItemFramework, ItemType, rediscover, TestingTools } from "./util";
 import { discoverTestFiles, loadTestsFromFile } from "./loader";
 import { Log } from "vscode-test-adapter-util";
 import { runHandler } from "./runner";
+
+// For E2E testing
+let _currentTestingTools: TestingTools;
+export function getTestingTools() { return _currentTestingTools; }
 
 export async function activate(context: vscode.ExtensionContext) {
     const workspaceFolder = (vscode.workspace.workspaceFolders || [])[0];
@@ -25,6 +29,7 @@ export async function activate(context: vscode.ExtensionContext) {
         tempFilePaths,
         context
     };
+    _currentTestingTools = testingTools;
 
     // Custom handler for loading tests. The "test" argument here is undefined,
     // but if we supported lazy-loading child test then this could be called with
@@ -43,14 +48,17 @@ export async function activate(context: vscode.ExtensionContext) {
 
     controller.resolveHandler = async (test) => {
         if (!test) {
-            await controller.refreshHandler!(new vscode.CancellationTokenSource().token);
+            await rediscover(testingTools);
             return;
         }
         else {
-            // Populate the file’s tests
             await loadTestsFromFile(testingTools, test);
         }
     };
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('RTestAdapter.rediscover', () => rediscover(testingTools))
+    );
 
     // We'll create the "run" type profile here, and give it the function to call.
     // You can also create debug and coverage profile types. The last `true` argument
